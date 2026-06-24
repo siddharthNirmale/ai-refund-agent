@@ -2,28 +2,59 @@
 
 import { create } from "zustand";
 
-import { AgentLog } from "@/types/log";
-import { Message } from "@/types/message";
+export type ChatMessage = {
+  id: string;
+  role: "user" | "assistant";
+  content: string;
+  timestamp: string;
+};
 
 type AgentStore = {
-  messages: Message[];
-  logs: AgentLog[];
+  logs: any[];
+  decision: string;
+  reason: string;
+
+  messages: ChatMessage[];
+
+  setResult: (
+    logs: any[],
+    decision: string,
+    reason: string
+  ) => void;
 
   addMessage: (
-    message: Message
+    message: ChatMessage
   ) => void;
-
-  addLog: (
-    log: AgentLog
-  ) => void;
-
-  clearLogs: () => void;
 };
 
 export const useAgentStore =
   create<AgentStore>((set) => ({
-    messages: [],
     logs: [],
+
+    decision: "",
+
+    reason: "",
+
+    messages: [
+      {
+        id: "1",
+        role: "assistant",
+        content:
+          "Hello! How can I help you today?",
+        timestamp: "Now",
+      },
+    ],
+
+    setResult: (
+      logs,
+      decision,
+      reason
+    ) =>
+      set({
+        logs,
+        decision,
+        reason,
+      }),
 
     addMessage: (message) =>
       set((state) => ({
@@ -32,14 +63,4 @@ export const useAgentStore =
           message,
         ],
       })),
-
-    addLog: (log) =>
-      set((state) => ({
-        logs: [...state.logs, log],
-      })),
-
-    clearLogs: () =>
-      set({
-        logs: [],
-      }),
   }));

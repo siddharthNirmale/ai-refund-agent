@@ -1,109 +1,89 @@
-"use client"
+"use client";
 
 import { useAgentStore } from "@/store/useAgentStore";
-import { CheckCircle2 } from "lucide-react";
+
+import {
+  CheckCircle2,
+  XCircle,
+  Loader2,
+} from "lucide-react";
 
 export default function Timeline() {
-
-  const logs =
-  useAgentStore(
+  const logs = useAgentStore(
     (state) => state.logs
   );
-  return (
 
-    <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">
+  if (!logs.length) {
+    return (
+      <div className="flex h-40 items-center justify-center text-sm text-slate-400">
+        No agent activity yet
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
       {logs.map((log, index) => (
         <div
-          key={log.id}
-          className="
-            relative
-            flex
-            gap-3
-            rounded-xl
-            border
-            border-slate-200
-            bg-white
-            p-4
-            transition-all
-            hover:border-slate-300
-            hover:shadow-sm
-          "
+          key={index}
+          className="flex gap-4"
         >
-          {/* Timeline Line */}
-          {index !== logs.length - 1 && (
-            <div
-              className="
-                absolute
-                left-[25px]
-                top-10
-                h-8
-                w-px
-                bg-slate-200
-              "
-            />
-          )}
+          <div className="mt-1">
+            {log.status ===
+              "success" && (
+              <CheckCircle2
+                className="
+                  h-5
+                  w-5
+                  text-emerald-500
+                "
+              />
+            )}
 
-          {/* Status Icon */}
-          <div
-            className="
-              flex
-              h-8
-              w-8
-              shrink-0
-              items-center
-              justify-center
-              rounded-full
-              bg-green-100
-            "
-          >
-            <CheckCircle2
-              className="
-                h-4
-                w-4
-                text-green-600
-              "
-            />
+            {log.status ===
+              "failed" && (
+              <XCircle
+                className="
+                  h-5
+                  w-5
+                  text-red-500
+                "
+              />
+            )}
+
+            {log.status ===
+              "running" && (
+              <Loader2
+                className="
+                  h-5
+                  w-5
+                  animate-spin
+                  text-amber-500
+                "
+              />
+            )}
           </div>
 
-          {/* Content */}
-          <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h4 className="font-medium text-slate-900">
-                  {log.step}
-                </h4>
+          <div className="flex-1">
+            <h4
+              className="
+                text-sm
+                font-semibold
+                text-slate-900
+              "
+            >
+              {log.step}
+            </h4>
 
-                <p className="mt-1 text-sm text-slate-500">
-                  {log.details}
-                </p>
-              </div>
-
-              <span
-                className="
-                  whitespace-nowrap
-                  text-xs
-                  text-slate-400
-                "
-              >
-                {log.time}
-              </span>
-            </div>
-
-            <div className="mt-3">
-              <span
-                className="
-                  rounded-full
-                  bg-green-100
-                  px-2
-                  py-1
-                  text-xs
-                  font-medium
-                  text-green-700
-                "
-              >
-                Completed
-              </span>
-            </div>
+            <p
+              className="
+                mt-1
+                text-sm
+                text-slate-500
+              "
+            >
+              {log.details}
+            </p>
           </div>
         </div>
       ))}

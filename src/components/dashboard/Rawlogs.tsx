@@ -1,7 +1,7 @@
-"use client"
-
+"use client";
 
 import { useAgentStore } from "@/store/useAgentStore";
+
 import {
   CheckCircle2,
   XCircle,
@@ -9,8 +9,31 @@ import {
 } from "lucide-react";
 
 export default function RawLogs() {
+  const logs = useAgentStore(
+    (state) => state.logs
+  );
 
-  const logs = useAgentStore((state)=>state.logs);
+  if (!logs.length) {
+    return (
+      <div
+        className="
+          flex
+          h-[400px]
+          items-center
+          justify-center
+          rounded-2xl
+          border
+          border-slate-800
+          bg-slate-950
+          text-sm
+          text-slate-500
+        "
+      >
+        No agent execution yet
+      </div>
+    );
+  }
+
   return (
     <div
       className="
@@ -29,7 +52,15 @@ export default function RawLogs() {
         </span>
 
         <div className="flex items-center gap-2">
-          <div className="h-2 w-2 animate-pulse rounded-full bg-green-500" />
+          <div
+            className="
+              h-2
+              w-2
+              animate-pulse
+              rounded-full
+              bg-green-500
+            "
+          />
 
           <span className="text-green-500">
             LIVE
@@ -38,7 +69,7 @@ export default function RawLogs() {
       </div>
 
       <div className="space-y-3">
-        {logs.map((log) => {
+        {logs.map((log, index) => {
           const isSuccess =
             log.status === "success";
 
@@ -50,7 +81,7 @@ export default function RawLogs() {
 
           return (
             <div
-              key={log.id}
+              key={index}
               className="
                 rounded-lg
                 border
@@ -61,7 +92,7 @@ export default function RawLogs() {
             >
               <div className="flex items-start gap-2">
                 <span className="text-slate-500">
-                  [{log.time}]
+                  [{index + 1}]
                 </span>
 
                 {isSuccess && (

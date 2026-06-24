@@ -7,46 +7,105 @@ import {
   checkFinalSale,
 } from "../tools/refundTools";
 
+function createLog(
+  step: string,
+  status: "success" | "failed" | "running",
+  details: string
+) {
+  return {
+    id: crypto.randomUUID(),
+
+    time:
+      new Date().toLocaleTimeString(),
+
+    step,
+
+    status,
+
+    details,
+  };
+}
+
 export async function runRefundAgent(
   customerId: string
 ) {
-  const logs = [];
+  const logs: any[] = [];
+
+  logs.push(
+    createLog(
+      "Agent Started",
+      "running",
+      `Processing refund request for ${customerId}`
+    )
+  );
+
+  // --------------------
+  // CUSTOMER LOOKUP
+  // --------------------
 
   const customer =
     await getCustomer(customerId);
 
   if (!customer) {
+    logs.push(
+      createLog(
+        "Customer Lookup",
+        "failed",
+        "Customer not found"
+      )
+    );
+
     return {
       decision: "denied",
       reason: "Customer not found",
+      riskScore: 100,
       logs,
     };
   }
 
-  logs.push({
-    step: "Customer Lookup",
-    status: "success",
-    details:
-      "Customer profile located",
-  });
+  logs.push(
+    createLog(
+      "Customer Lookup",
+      "success",
+      `${customer.name} (${customer.tier}) loaded`
+    )
+  );
+
+  // --------------------
+  // ORDER LOOKUP
+  // --------------------
 
   const order =
     await getLatestOrder(customerId);
 
   if (!order) {
+    logs.push(
+      createLog(
+        "Order Retrieval",
+        "failed",
+        "No orders found"
+      )
+    );
+
     return {
       decision: "denied",
       reason: "Order not found",
+      riskScore: 100,
       logs,
     };
   }
 
-  logs.push({
-    step: "Order Retrieval",
-    status: "success",
-    details:
-      `Loaded ${order.product}`,
-  });
+  logs.push(
+    createLog(
+      "Order Retrieval",
+      "success",
+      `${order.product} loaded`
+    )
+  );
+
+  // --------------------
+  // REFUND WINDOW
+  // --------------------
 
   const refundWindow =
     await validateRefundWindow(
@@ -55,29 +114,34 @@ export async function runRefundAgent(
     );
 
   if (!refundWindow.passed) {
-    logs.push({
-      step:
+    logs.push(
+      createLog(
         "Refund Window Validation",
-      status: "failed",
-      details:
-        "Outside eligibility period",
-    });
+        "failed",
+        `Exceeded ${refundWindow.limit}-day limit`
+      )
+    );
 
     return {
       decision: "denied",
       reason:
         "Outside refund window",
+      riskScore: 78,
       logs,
     };
   }
 
-  logs.push({
-    step:
+  logs.push(
+    createLog(
       "Refund Window Validation",
-    status: "success",
-    details:
-      `Within ${refundWindow.limit}-day limit`,
-  });
+      "success",
+      `Within ${refundWindow.limit}-day limit`
+    )
+  );
+
+  // --------------------
+  // DIGITAL PRODUCT
+  // --------------------
 
   const digitalCheck =
     await checkDigitalProduct(
@@ -85,29 +149,34 @@ export async function runRefundAgent(
     );
 
   if (!digitalCheck.passed) {
-    logs.push({
-      step:
+    logs.push(
+      createLog(
         "Digital Product Check",
-      status: "failed",
-      details:
-        "Digital products are non-refundable",
-    });
+        "failed",
+        "Digital products are not refundable"
+      )
+    );
 
     return {
       decision: "denied",
       reason:
-        "Digital product cannot be refunded",
+        "Digital products are non-refundable",
+      riskScore: 90,
       logs,
     };
   }
 
-  logs.push({
-    step:
+  logs.push(
+    createLog(
       "Digital Product Check",
-    status: "success",
-    details:
-      "Physical product detected",
-  });
+      "success",
+      "Physical product detected"
+    )
+  );
+
+  // --------------------
+  // FINAL SALE
+  // --------------------
 
   const finalSale =
     await checkFinalSale(
@@ -115,29 +184,34 @@ export async function runRefundAgent(
     );
 
   if (!finalSale.passed) {
-    logs.push({
-      step:
+    logs.push(
+      createLog(
         "Final Sale Check",
-      status: "failed",
-      details:
-        "Item marked final sale",
-    });
+        "failed",
+        "Item marked as final sale"
+      )
+    );
 
     return {
       decision: "denied",
       reason:
-        "Final sale item",
+        "Final sale items cannot be refunded",
+      riskScore: 85,
       logs,
     };
   }
 
-  logs.push({
-    step:
+  logs.push(
+    createLog(
       "Final Sale Check",
-    status: "success",
-    details:
-      "Eligible for refund",
-  });
+      "success",
+      "Refund eligible"
+    )
+  );
+
+  // --------------------
+  // CHARGEBACK
+  // --------------------
 
   const chargeback =
     await checkChargeback(
@@ -145,41 +219,48 @@ export async function runRefundAgent(
     );
 
   if (!chargeback.passed) {
-    logs.push({
-      step:
+    logs.push(
+      createLog(
         "Chargeback Check",
-      status: "failed",
-      details:
-        "Previous chargeback found",
-    });
+        "failed",
+        "Customer has previous chargeback history"
+      )
+    );
 
     return {
       decision: "denied",
       reason:
         "Chargeback history detected",
+      riskScore: 95,
       logs,
     };
   }
 
-  logs.push({
-    step:
+  logs.push(
+    createLog(
       "Chargeback Check",
-    status: "success",
-    details:
-      "No chargebacks found",
-  });
+      "success",
+      "No chargebacks found"
+    )
+  );
 
-  logs.push({
-    step: "Final Decision",
-    status: "success",
-    details:
-      "Refund approved",
-  });
+  // --------------------
+  // FINAL DECISION
+  // --------------------
+
+  logs.push(
+    createLog(
+      "Final Decision",
+      "success",
+      "Refund approved"
+    )
+  );
 
   return {
     decision: "approved",
+
     reason:
-      "Customer satisfies all policy requirements",
+      "Customer satisfies all refund policy requirements",
 
     riskScore: 12,
 
