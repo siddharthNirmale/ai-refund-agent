@@ -9,7 +9,7 @@ export default function RawLogs() {
   return (
     <div
       className="
-        max-h-[520px]
+        max-h-[400px]
         overflow-y-auto
         rounded-2xl
         bg-slate-950

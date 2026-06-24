@@ -10,23 +10,23 @@ import { Send, Mic } from "lucide-react";
 
 export default function ChatPanel() {
   return (
-    <section className="bg-slate-100  min-w-0 p-4">
-      <Card className="h-full flex flex-col rounded-3xl">
+    <section className="h-full min-h-0 flex flex-col bg-slate-100 p-4">
+      
+      {/* 2. Swapped h-full for flex-1 and added min-h-0 here */}
+      <Card className="flex-1 min-h-0 flex flex-col rounded-3xl">
+        
         {/* Header */}
-
-        <div className="border-b px-6 py-5">
+        <div className="shrink-0 border-b px-6 py-5">
           <h2 className="text-2xl font-semibold">
             Customer Support Chat
           </h2>
-
           <p className="text-sm text-green-600">
             ● Connected
           </p>
         </div>
 
         {/* Customer */}
-
-        <div className="px-6 py-4 border-b">
+        <div className="shrink-0 px-6 py-4 border-b">
           <div className="rounded-xl bg-slate-100 p-4">
             <span className="font-medium">
               Customer: CUST003 (Sarah Johnson)
@@ -34,8 +34,7 @@ export default function ChatPanel() {
           </div>
         </div>
 
-        {/* Messages */}
-
+        {/* Messages (This part was already perfect! 🌟) */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-5">
           {messages.map((message) => (
             <MessageBubble
@@ -48,29 +47,24 @@ export default function ChatPanel() {
         </div>
 
         {/* Input */}
-
-        <div className="border-t p-4">
+        <div className="shrink-0 border-t p-4">
           <div className="flex gap-2">
             <Input
               placeholder="Type your message..."
               className="h-12"
             />
-
             <Button
               variant="outline"
               size="icon"
             >
               <Mic className="h-4 w-4" />
             </Button>
-
             <Button size="icon">
               <Send className="h-4 w-4" />
             </Button>
           </div>
-
           <p className="mt-3 text-center text-xs text-slate-500">
-            AI can make mistakes. Verify important
-            information.
+            AI can make mistakes. Verify important information.
           </p>
         </div>
       </Card>

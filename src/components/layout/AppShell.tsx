@@ -6,7 +6,8 @@ export default function AppShell({ children }: Props) {
   return (
     <main
       className="
-      h-screen
+      h-[100dvh]
+      w-full
       overflow-hidden
       bg-gradient-to-br
       from-slate-950
