@@ -1,3 +1,6 @@
+"use client"
+
+
 import { messages } from "@/data/chat";
 
 import MessageBubble from "./MessageBubble";

@@ -1,4 +1,7 @@
-import { logs } from "@/data/logs";
+"use client"
+
+
+import { useAgentStore } from "@/store/useAgentStore";
 import {
   CheckCircle2,
   XCircle,
@@ -6,6 +9,8 @@ import {
 } from "lucide-react";
 
 export default function RawLogs() {
+
+  const logs = useAgentStore((state)=>state.logs);
   return (
     <div
       className="

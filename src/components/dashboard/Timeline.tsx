@@ -1,7 +1,14 @@
-import { logs } from "@/data/logs";
+"use client"
+
+import { useAgentStore } from "@/store/useAgentStore";
 import { CheckCircle2 } from "lucide-react";
 
 export default function Timeline() {
+
+  const logs =
+  useAgentStore(
+    (state) => state.logs
+  );
   return (
 
     <div className="max-h-[400px] overflow-y-auto space-y-3 pr-2">

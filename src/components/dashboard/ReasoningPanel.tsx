@@ -1,3 +1,5 @@
+"use client"
+
 import {
   Tabs,
   TabsContent,
@@ -5,16 +7,26 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 
+import { useAgentStore } from "@/store/useAgentStore";
 import DecisionCard from "./DecisionCard";
 import Timeline from "./Timeline";
 import PolicyChecks from "./PolicyChecks";
 import RawLogs from "./Rawlogs";
 
 export default function ReasoningPanel() {
+  const decision =
+    useAgentStore(
+      (state) => state.decision
+    );
+
+  const reason =
+    useAgentStore(
+      (state) => state.reason
+    );
   return (
     <aside className="min-w-0 border-l border-slate-200 bg-slate-50 p-4">
       <div className="flex h-full flex-col rounded-3xl border border-slate-200 bg-white shadow-sm">
-        
+
         {/* Header */}
         <div className="border-b px-5 py-4">
           <div className="flex items-center justify-between">
@@ -39,8 +51,12 @@ export default function ReasoningPanel() {
         {/* Current Decision */}
         <div className="border-b p-5">
           <DecisionCard
-            status="approved"
-            reason="Customer qualifies under Gold Member refund extension policy."
+            status={
+              decision === "approved"
+                ? "approved"
+                : "denied"
+            }
+            reason={reason}
           />
         </div>
 
@@ -68,7 +84,7 @@ export default function ReasoningPanel() {
             </div>
           </Tabs>
         </div>
-        
+
       </div>
     </aside>
   );
