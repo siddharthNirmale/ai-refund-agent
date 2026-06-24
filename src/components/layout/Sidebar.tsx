@@ -1,11 +1,14 @@
-import { customer } from "@/data/customer";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, LayoutDashboard, Mic } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { customers } from "@/data/customers";
+import { LayoutDashboard, MessageSquare, Mic } from "lucide-react";
 import Link from "next/link";
+import CustomerSelector from "./CustomerSelector";
 
 export default function Sidebar() {
+  const customer = customers[0];
+
   return (
     <aside className="border-r border-slate-800 p-4 bg-slate-950">
       <div className="mb-8">
@@ -17,6 +20,8 @@ export default function Sidebar() {
           E-commerce Refund Assistant
         </p>
       </div>
+
+      <CustomerSelector />
 
       <div className="space-y-3">
         <Button className="w-full justify-start">
