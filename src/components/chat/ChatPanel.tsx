@@ -10,7 +10,7 @@ import { Send, Mic } from "lucide-react";
 
 export default function ChatPanel() {
   return (
-    <section className="bg-slate-100 p-4">
+    <section className="bg-slate-100  min-w-0 p-4">
       <Card className="h-full flex flex-col rounded-3xl">
         {/* Header */}
 
