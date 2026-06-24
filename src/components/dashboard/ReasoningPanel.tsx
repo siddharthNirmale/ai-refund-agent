@@ -7,7 +7,7 @@ import {
 
 import Timeline from "./Timeline";
 import PolicyChecks from "./PolicyChecks";
-import RawLogs from "./RawLogs";
+import RawLogs from "./Rawlogs";
 
 export default function ReasoningPanel() {
   return (

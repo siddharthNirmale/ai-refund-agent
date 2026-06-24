@@ -1,6 +1,7 @@
 import AppShell from "@/components/layout/AppShell";
 import Sidebar from "@/components/layout/Sidebar";
 import ChatPanel from "@/components/chat/ChatPanel";
+import ReasoningPanel from "@/components/dashboard/ReasoningPanel";
 
 export default function Home() {
   return (
@@ -9,9 +10,7 @@ export default function Home() {
 
       <ChatPanel />
 
-      <div className="bg-white">
-        Right Panel Coming Next
-      </div>
+      <ReasoningPanel />
     </AppShell>
   );
 }

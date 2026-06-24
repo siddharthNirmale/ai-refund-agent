@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, LayoutDashboard, Mic } from "lucide-react";
+import Link from "next/link";
 
 export default function Sidebar() {
   return (
@@ -24,11 +25,14 @@ export default function Sidebar() {
         </Button>
 
         <Button
+          asChild
           variant="ghost"
           className="w-full justify-start"
         >
-          <LayoutDashboard className="mr-2 h-4 w-4" />
-          Admin Dashboard
+          <Link href="/admin">
+            <LayoutDashboard className="mr-2 h-4 w-4" />
+            Admin Dashboard
+          </Link>
         </Button>
       </div>
 
