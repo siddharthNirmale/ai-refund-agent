@@ -1,8 +1,11 @@
 "use client";
 
 import { customers } from "@/data/customers";
+import { useAgentStore } from "@/store/useAgentStore";
 
 export default function CustomerSelector() {
+
+  const {selectedCustomer, setSelectedCustomer} = useAgentStore();
   return (
     <select
       className="

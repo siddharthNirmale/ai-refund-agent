@@ -7,7 +7,10 @@ export default function AppShell({ children }: Props) {
     <main
       className="
       h-screen
-      bg-slate-950
+      bg-gradient-to-br
+      from-slate-950
+      via-slate-900
+      to-black
       text-white
       overflow-hidden
     "
@@ -16,7 +19,7 @@ export default function AppShell({ children }: Props) {
         className="
         grid
         h-full
-        grid-cols-[280px_1fr_500px]
+        grid-cols-[300px_1fr_520px]
       "
       >
         {children}
