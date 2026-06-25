@@ -1,22 +1,16 @@
-export type CustomerTier =
-  | "Silver"
-  | "Gold"
-  | "Platinum";
-
-export type Customer = {
+export type customer = {
   id: string;
   name: string;
   email: string;
 
-  tier: CustomerTier;
+  tier:
+    | "Silver"
+    | "Gold"
+    | "Platinum";
 
   orders: number;
 
   spent: number;
 
-  refunds: number;
-
   chargebacks: number;
-
-  joinedAt: string;
 };
