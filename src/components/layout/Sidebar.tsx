@@ -1,15 +1,21 @@
 "use client";
 
 import Link from "next/link";
+
 import {
   LayoutDashboard,
   MessageSquare,
   Mic,
+  ShieldCheck,
+  ShieldAlert,
 } from "lucide-react";
 
 import CustomerSelector from "./CustomerSelector";
 
 import { customers } from "@/data/customers";
+
+import { useCustomerStore } from "@/store/useCustomerStore";
+import { useAgentStore } from "@/store/useAgentStore";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,7 +25,43 @@ import {
 } from "@/components/ui/card";
 
 export default function Sidebar() {
-  const customer = customers[0];
+  const selectedCustomerId =
+    useCustomerStore(
+      (state) =>
+        state.selectedCustomerId
+    );
+
+  const customer =
+    customers.find(
+      (c) =>
+        c.id ===
+        selectedCustomerId
+    ) || customers[0];
+
+  const decision =
+    useAgentStore(
+      (state) => state.decision
+    );
+
+  const riskScore =
+    useAgentStore(
+      (state) => state.riskScore
+    );
+
+  const loading =
+    useAgentStore(
+      (state) => state.loading
+    );
+
+  const logs =
+    useAgentStore(
+      (state) => state.logs
+    );
+
+  const sentiment =
+    riskScore > 60
+      ? "Risky"
+      : "Positive";
 
   return (
     <aside
@@ -27,8 +69,8 @@ export default function Sidebar() {
         flex
         h-full
         min-h-0
-        overflow-y-auto
         flex-col
+        overflow-y-auto
         border-r
         border-slate-800
         bg-slate-950
@@ -36,8 +78,9 @@ export default function Sidebar() {
         py-6
       "
     >
-      {/* Header */}
-      <div className="mb-8 shrink-0">
+      {/* Logo */}
+
+      <div className="mb-8">
         <div className="flex items-center gap-3">
           <div
             className="
@@ -48,6 +91,7 @@ export default function Sidebar() {
               justify-center
               rounded-xl
               bg-violet-600
+              text-sm
               font-bold
               text-white
             "
@@ -64,16 +108,26 @@ export default function Sidebar() {
               <div className="h-2 w-2 rounded-full bg-green-500" />
 
               <span className="text-xs text-slate-400">
-                Online
+                Agent Online
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Customer Selector */}
-      <div className="mb-6 shrink-0">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+      {/* Customer */}
+
+      <div className="mb-6">
+        <p
+          className="
+            mb-2
+            text-xs
+            font-medium
+            uppercase
+            tracking-wide
+            text-slate-500
+          "
+        >
           Customer
         </p>
 
@@ -81,8 +135,18 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <div className="mb-6 shrink-0">
-        <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-500">
+
+      <div className="mb-6">
+        <p
+          className="
+            mb-2
+            text-xs
+            font-medium
+            uppercase
+            tracking-wide
+            text-slate-500
+          "
+        >
           Navigation
         </p>
 
@@ -98,7 +162,12 @@ export default function Sidebar() {
           <Button
             asChild
             variant="ghost"
-            className="w-full justify-start text-slate-300 hover:text-white"
+            className="
+              w-full
+              justify-start
+              text-slate-300
+              hover:text-white
+            "
           >
             <Link href="/admin">
               <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -109,7 +178,8 @@ export default function Sidebar() {
       </div>
 
       {/* Customer Profile */}
-      <Card className="shrink-0 border-slate-800 bg-slate-900/70">
+
+      <Card className="border-slate-800 bg-slate-900/70">
         <CardContent className="p-5">
           <div className="flex items-start justify-between">
             <div>
@@ -119,6 +189,10 @@ export default function Sidebar() {
 
               <p className="mt-1 text-xs text-slate-400">
                 {customer.id}
+              </p>
+
+              <p className="mt-1 text-xs text-slate-500">
+                {customer.email}
               </p>
             </div>
 
@@ -152,52 +226,164 @@ export default function Sidebar() {
       </Card>
 
       {/* AI Insights */}
-      <div className="mt-6 shrink-0">
-        <p className="mb-3 text-xs font-medium uppercase tracking-wide text-slate-500">
+
+      <div className="mt-6">
+        <p
+          className="
+            mb-3
+            text-xs
+            font-medium
+            uppercase
+            tracking-wide
+            text-slate-500
+          "
+        >
           AI Insights
         </p>
 
         <div className="space-y-3">
-          <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+          <div
+            className="
+              rounded-xl
+              border
+              border-slate-800
+              bg-slate-900/40
+              p-3
+            "
+          >
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-400">
-                Refund Risk
+                Risk Score
               </span>
 
-              <span className="font-semibold text-green-400">
-                12%
+              <span
+                className={`
+                  font-semibold
+                  ${
+                    riskScore > 60
+                      ? "text-red-400"
+                      : "text-green-400"
+                  }
+                `}
+              >
+                {riskScore}%
               </span>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+          <div
+            className="
+              rounded-xl
+              border
+              border-slate-800
+              bg-slate-900/40
+              p-3
+            "
+          >
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-400">
                 Sentiment
               </span>
 
               <Badge variant="secondary">
-                Positive
+                {sentiment}
               </Badge>
             </div>
           </div>
 
-          <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+          <div
+            className="
+              rounded-xl
+              border
+              border-slate-800
+              bg-slate-900/40
+              p-3
+            "
+          >
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-400">
-                Session
+                Checks
               </span>
 
-              <span className="font-medium text-green-500">
-                Live
+              <span className="font-medium text-white">
+                {logs.length}
+              </span>
+            </div>
+          </div>
+
+          <div
+            className="
+              rounded-xl
+              border
+              border-slate-800
+              bg-slate-900/40
+              p-3
+            "
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-slate-400">
+                Status
+              </span>
+
+              <span
+                className={`
+                  font-medium
+                  ${
+                    loading
+                      ? "text-yellow-400"
+                      : "text-green-400"
+                  }
+                `}
+              >
+                {loading
+                  ? "Running"
+                  : "Ready"}
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Voice Assistant */}
-      <div className="mt-auto pt-6 shrink-0">
+      {/* Decision */}
+
+      {decision && (
+        <Card className="mt-6 border-slate-800 bg-slate-900">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2">
+              {decision ===
+              "approved" ? (
+                <ShieldCheck className="h-5 w-5 text-green-400" />
+              ) : (
+                <ShieldAlert className="h-5 w-5 text-red-400" />
+              )}
+
+              <span className="font-medium text-white">
+                Latest Decision
+              </span>
+            </div>
+
+            <p
+              className={`
+                mt-3
+                text-sm
+                font-semibold
+                ${
+                  decision ===
+                  "approved"
+                    ? "text-green-400"
+                    : "text-red-400"
+                }
+              `}
+            >
+              {decision.toUpperCase()}
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Voice */}
+
+      <div className="mt-auto pt-6">
         <Card className="border-violet-500/20 bg-violet-500/5">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -205,20 +391,21 @@ export default function Sidebar() {
 
               <div>
                 <p className="text-sm font-medium text-white">
-                  Voice Assistant
+                  Voice Agent
                 </p>
 
                 <p className="text-xs text-slate-400">
-                  Realtime refund support
+                  Bonus Feature
                 </p>
               </div>
             </div>
 
             <Button
+              disabled
               className="mt-4 w-full"
               size="sm"
             >
-              Start Conversation
+              Coming Soon
             </Button>
           </CardContent>
         </Card>

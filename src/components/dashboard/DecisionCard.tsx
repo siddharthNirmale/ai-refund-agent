@@ -24,30 +24,22 @@ export default function DecisionCard({
   const config = {
     approved: {
       title: "Refund Approved",
-
       icon: CheckCircle2,
-
       badge:
         "bg-green-100 text-green-700 border-green-200",
-
       card:
         "border-green-200 bg-green-50",
-
       iconColor:
         "text-green-600",
     },
 
     denied: {
       title: "Refund Denied",
-
       icon: XCircle,
-
       badge:
         "bg-red-100 text-red-700 border-red-200",
-
       card:
         "border-red-200 bg-red-50",
-
       iconColor:
         "text-red-600",
     },
@@ -55,15 +47,11 @@ export default function DecisionCard({
     review: {
       title:
         "Manual Review Required",
-
       icon: ShieldAlert,
-
       badge:
         "bg-yellow-100 text-yellow-700 border-yellow-200",
-
       card:
         "border-yellow-200 bg-yellow-50",
-
       iconColor:
         "text-yellow-600",
     },
@@ -75,6 +63,16 @@ export default function DecisionCard({
   const Icon =
     current.icon;
 
+  const riskColor =
+    riskScore <= 25
+      ? "text-green-600"
+      : riskScore <= 60
+      ? "text-yellow-600"
+      : "text-red-600";
+
+  const confidence =
+    Math.max(100 - riskScore, 0);
+
   return (
     <div
       className={`
@@ -85,7 +83,7 @@ export default function DecisionCard({
         ${current.card}
       `}
     >
-      {/* Top Row */}
+      {/* Header */}
 
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
@@ -98,6 +96,7 @@ export default function DecisionCard({
               justify-center
               rounded-full
               bg-white
+              shadow-sm
             "
           >
             <Icon
@@ -137,7 +136,7 @@ export default function DecisionCard({
 
       {/* Reason */}
 
-      <div className="mt-4 rounded-xl bg-white/70 p-3">
+      <div className="mt-4 rounded-xl bg-white/80 p-4">
         <p className="text-sm leading-relaxed text-slate-700">
           {reason}
         </p>
@@ -152,13 +151,21 @@ export default function DecisionCard({
             border
             bg-white
             p-3
+            shadow-sm
           "
         >
           <p className="text-xs text-slate-500">
             Risk Score
           </p>
 
-          <p className="mt-1 text-lg font-bold">
+          <p
+            className={`
+              mt-1
+              text-lg
+              font-bold
+              ${riskColor}
+            `}
+          >
             {riskScore}%
           </p>
         </div>
@@ -169,6 +176,7 @@ export default function DecisionCard({
             border
             bg-white
             p-3
+            shadow-sm
           "
         >
           <div className="flex items-center gap-2">
@@ -179,14 +187,51 @@ export default function DecisionCard({
             </span>
           </div>
 
-          <p className="mt-1 text-lg font-bold">
-            {Math.max(
-              100 - riskScore,
-              0
-            )}
-            %
+          <p className="mt-1 text-lg font-bold text-slate-900">
+            {confidence}%
           </p>
         </div>
+      </div>
+
+      {/* Confidence Progress */}
+
+      <div className="mt-4">
+        <div className="mb-2 flex items-center justify-between">
+          <span className="text-xs text-slate-500">
+            Approval Confidence
+          </span>
+
+          <span className="text-xs font-medium text-slate-700">
+            {confidence}%
+          </span>
+        </div>
+
+        <div className="h-2 overflow-hidden rounded-full bg-white">
+          <div
+            className="
+              h-full
+              rounded-full
+              bg-green-500
+              transition-all
+              duration-700
+            "
+            style={{
+              width: `${confidence}%`,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Footer */}
+
+      <div className="mt-4 flex items-center justify-between border-t border-black/5 pt-3">
+        <span className="text-xs text-slate-500">
+          Decision Generated
+        </span>
+
+        <span className="text-xs font-medium text-slate-700">
+          {new Date().toLocaleTimeString()}
+        </span>
       </div>
     </div>
   );

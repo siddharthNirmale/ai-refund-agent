@@ -7,6 +7,12 @@ import {
   TabsTrigger,
 } from "@/components/ui/tabs";
 
+import {
+  ShieldCheck,
+  Activity,
+  Brain,
+} from "lucide-react";
+
 import { useAgentStore } from "@/store/useAgentStore";
 
 import DecisionCard from "./DecisionCard";
@@ -15,37 +21,33 @@ import PolicyChecks from "./PolicyChecks";
 import RawLogs from "./Rawlogs";
 
 export default function ReasoningPanel() {
-  const decision =
-    useAgentStore(
-      (state) => state.decision
-    );
+  const decision = useAgentStore(
+    (state) => state.decision
+  );
 
-  const reason =
-    useAgentStore(
-      (state) => state.reason
-    );
+  const reason = useAgentStore(
+    (state) => state.reason
+  );
 
-  const riskScore =
-    useAgentStore(
-      (state) => state.riskScore
-    );
+  const riskScore = useAgentStore(
+    (state) => state.riskScore
+  );
 
-  const loading =
-    useAgentStore(
-      (state) => state.loading
-    );
+  const loading = useAgentStore(
+    (state) => state.loading
+  );
 
-  const logs =
-    useAgentStore(
-      (state) => state.logs
-    );
+  const logs = useAgentStore(
+    (state) => state.logs
+  );
 
   return (
-    <aside className="min-w-0 border-l border-slate-200 bg-slate-50 p-4">
+    <aside className="h-full min-h-0 border-l border-slate-200 bg-slate-50 p-4">
       <div
         className="
           flex
           h-full
+          min-h-0
           flex-col
           overflow-hidden
           rounded-3xl
@@ -57,23 +59,23 @@ export default function ReasoningPanel() {
       >
         {/* Header */}
 
-        <div className="border-b px-5 py-4">
+        <div className="border-b border-slate-200 px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-semibold text-slate-900">
+              <h2 className="text-lg font-semibold text-slate-900">
                 Agent Reasoning
               </h2>
 
-              <p className="text-xs text-slate-500">
-                Refund validation workflow
+              <p className="text-sm text-slate-500">
+                Real-time refund analysis
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <div
                 className={`
-                  h-2
-                  w-2
+                  h-2.5
+                  w-2.5
                   rounded-full
                   animate-pulse
                   ${
@@ -88,7 +90,7 @@ export default function ReasoningPanel() {
 
               <span
                 className={`
-                  text-xs
+                  text-sm
                   font-medium
                   ${
                     loading
@@ -103,20 +105,19 @@ export default function ReasoningPanel() {
                   ? "Processing"
                   : decision
                   ? "Completed"
-                  : "Waiting"}
+                  : "Idle"}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Decision Area */}
+        {/* Decision */}
 
-        <div className="border-b p-5">
+        <div className="border-b border-slate-200 p-5">
           {decision ? (
             <DecisionCard
               status={
-                decision ===
-                "approved"
+                decision === "approved"
                   ? "approved"
                   : "denied"
               }
@@ -130,63 +131,98 @@ export default function ReasoningPanel() {
                 border
                 border-dashed
                 border-slate-300
-                p-6
+                bg-slate-50
+                p-8
                 text-center
               "
             >
-              <p className="font-medium text-slate-700">
-                No Decision Yet
-              </p>
+              <Brain className="mx-auto h-10 w-10 text-slate-300" />
+
+              <h3 className="mt-4 font-semibold text-slate-800">
+                Agent Ready
+              </h3>
 
               <p className="mt-1 text-sm text-slate-500">
-                Submit a refund request
-                to start agent analysis.
+                Submit a refund request to start
+                policy validation and tool execution.
               </p>
             </div>
           )}
         </div>
 
-        {/* Quick Stats */}
+        {/* Metrics */}
 
-        <div className="grid grid-cols-2 gap-3 border-b p-4">
+        <div className="grid grid-cols-3 gap-3 border-b border-slate-200 p-5">
           <div
             className="
-              rounded-xl
+              rounded-2xl
               border
               border-slate-200
-              p-3
+              bg-slate-50
+              p-4
             "
           >
-            <p className="text-xs text-slate-500">
-              Risk Score
-            </p>
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-slate-500" />
 
-            <p className="mt-1 text-xl font-bold">
+              <span className="text-xs text-slate-500">
+                Risk Score
+              </span>
+            </div>
+
+            <p className="mt-2 text-2xl font-bold text-slate-900">
               {riskScore || 0}%
             </p>
           </div>
 
           <div
             className="
-              rounded-xl
+              rounded-2xl
               border
               border-slate-200
-              p-3
+              bg-slate-50
+              p-4
             "
           >
-            <p className="text-xs text-slate-500">
-              Checks Executed
-            </p>
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-slate-500" />
 
-            <p className="mt-1 text-xl font-bold">
+              <span className="text-xs text-slate-500">
+                Checks
+              </span>
+            </div>
+
+            <p className="mt-2 text-2xl font-bold text-slate-900">
               {logs.length}
+            </p>
+          </div>
+
+          <div
+            className="
+              rounded-2xl
+              border
+              border-slate-200
+              bg-slate-50
+              p-4
+            "
+          >
+            <div className="flex items-center gap-2">
+              <Brain className="h-4 w-4 text-slate-500" />
+
+              <span className="text-xs text-slate-500">
+                Decision
+              </span>
+            </div>
+
+            <p className="mt-2 text-sm font-semibold capitalize text-slate-900">
+              {decision || "Waiting"}
             </p>
           </div>
         </div>
 
         {/* Tabs */}
 
-        <div className="flex-1 overflow-hidden p-4">
+        <div className="flex-1 min-h-0 overflow-hidden p-4">
           <Tabs
             defaultValue="timeline"
             className="flex h-full flex-col"
@@ -205,7 +241,7 @@ export default function ReasoningPanel() {
               </TabsTrigger>
             </TabsList>
 
-            <div className="mt-4 flex-1 overflow-y-auto">
+            <div className="mt-4 flex-1 min-h-0 overflow-y-auto">
               <TabsContent
                 value="timeline"
                 className="mt-0"

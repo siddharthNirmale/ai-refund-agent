@@ -33,11 +33,25 @@ type AgentStore = {
 
   messages: ChatMessage[];
 
+  // Actions
+
   setLoading: (
     loading: boolean
   ) => void;
 
   clearAgentRun: () => void;
+
+  addLog: (
+    log: AgentLog
+  ) => void;
+
+  updateLogStatus: (
+    id: string,
+    status:
+      | "running"
+      | "success"
+      | "failed"
+  ) => void;
 
   setResult: (
     logs: AgentLog[],
@@ -49,6 +63,8 @@ type AgentStore = {
   addMessage: (
     message: ChatMessage
   ) => void;
+
+  clearMessages: () => void;
 };
 
 export const useAgentStore =
@@ -65,10 +81,10 @@ export const useAgentStore =
 
     messages: [
       {
-        id: "1",
+        id: "welcome",
         role: "assistant",
         content:
-          "Hello! How can I help you today?",
+          "Hello! I can help process refund requests. Please describe your issue.",
         timestamp: "Now",
       },
     ],
@@ -82,7 +98,28 @@ export const useAgentStore =
         decision: "",
         reason: "",
         riskScore: 0,
+        loading: false,
       }),
+
+    addLog: (log) =>
+      set((state) => ({
+        logs: [...state.logs, log],
+      })),
+
+    updateLogStatus: (
+      id,
+      status
+    ) =>
+      set((state) => ({
+        logs: state.logs.map((log) =>
+          log.id === id
+            ? {
+                ...log,
+                status,
+              }
+            : log
+        ),
+      })),
 
     setResult: (
       logs,
@@ -95,6 +132,7 @@ export const useAgentStore =
         decision,
         reason,
         riskScore,
+        loading: false,
       }),
 
     addMessage: (message) =>
@@ -104,4 +142,17 @@ export const useAgentStore =
           message,
         ],
       })),
+
+    clearMessages: () =>
+      set({
+        messages: [
+          {
+            id: "welcome",
+            role: "assistant",
+            content:
+              "Hello! I can help process refund requests. Please describe your issue.",
+            timestamp: "Now",
+          },
+        ],
+      }),
   }));
