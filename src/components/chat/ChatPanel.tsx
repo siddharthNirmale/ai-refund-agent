@@ -1,6 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+} from "react";
 
 import MessageBubble from "./MessageBubble";
 
@@ -22,6 +26,9 @@ import {
 export default function ChatPanel() {
   const [input, setInput] =
     useState("");
+
+  const bottomRef =
+    useRef<HTMLDivElement>(null);
 
   const selectedCustomerId =
     useCustomerStore(
@@ -67,9 +74,20 @@ export default function ChatPanel() {
         state.clearAgentRun
     );
 
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [messages, loading]);
+
   const handleSend =
     async () => {
-      if (!input.trim()) return;
+      if (
+        !input.trim() ||
+        loading
+      ) {
+        return;
+      }
 
       addMessage({
         id: crypto.randomUUID(),
@@ -109,6 +127,12 @@ export default function ChatPanel() {
             }
           );
 
+        if (!response.ok) {
+          throw new Error(
+            "API request failed"
+          );
+        }
+
         const result =
           await response.json();
 
@@ -124,7 +148,7 @@ export default function ChatPanel() {
 
           role: "assistant",
 
-          content: `Refund ${result.decision.toUpperCase()}
+          content: `Decision: ${result.decision.toUpperCase()}
 
 Reason: ${result.reason}
 
@@ -142,7 +166,7 @@ Risk Score: ${result.riskScore}%`,
           role: "assistant",
 
           content:
-            "Unable to process refund request.",
+            "Unable to process refund request. Please try again.",
 
           timestamp:
             new Date().toLocaleTimeString(),
@@ -155,6 +179,7 @@ Risk Score: ${result.riskScore}%`,
   return (
     <section className="flex h-full min-h-0 flex-col bg-slate-100 p-4">
       <Card className="flex min-h-0 flex-1 flex-col rounded-3xl">
+        
         {/* Header */}
 
         <div className="shrink-0 border-b px-6 py-5">
@@ -171,15 +196,31 @@ Risk Score: ${result.riskScore}%`,
 
         <div className="shrink-0 border-b px-6 py-4">
           <div className="rounded-xl bg-slate-100 p-4">
-            <span className="font-medium">
-              Customer:
-              {" "}
-              {customer?.id}
-              {" "}
-              (
-              {customer?.name}
-              )
-            </span>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">
+                  {customer?.name}
+                </p>
+
+                <p className="text-sm text-slate-500">
+                  {customer?.id}
+                </p>
+              </div>
+
+              <div
+                className="
+                  rounded-full
+                  bg-violet-100
+                  px-3
+                  py-1
+                  text-xs
+                  font-medium
+                  text-violet-700
+                "
+              >
+                {customer?.tier}
+              </div>
+            </div>
           </div>
         </div>
 
@@ -210,14 +251,33 @@ Risk Score: ${result.riskScore}%`,
           )}
 
           {loading && (
-            <div className="flex items-center gap-2 text-slate-500">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <div
+              className="
+                flex
+                items-center
+                gap-3
+                rounded-xl
+                bg-slate-100
+                p-3
+                text-slate-600
+              "
+            >
+              <Loader2
+                className="
+                  h-4
+                  w-4
+                  animate-spin
+                "
+              />
 
               <span>
-                Agent analyzing refund policy...
+                AI agent is validating
+                refund policies...
               </span>
             </div>
           )}
+
+          <div ref={bottomRef} />
         </div>
 
         {/* Input */}
@@ -226,6 +286,7 @@ Risk Score: ${result.riskScore}%`,
           <div className="flex gap-2">
             <Input
               value={input}
+              disabled={loading}
               onChange={(e) =>
                 setInput(
                   e.target.value
@@ -247,6 +308,7 @@ Risk Score: ${result.riskScore}%`,
             <Button
               variant="outline"
               size="icon"
+              disabled={loading}
             >
               <Mic className="h-4 w-4" />
             </Button>
@@ -259,7 +321,13 @@ Risk Score: ${result.riskScore}%`,
               }
             >
               {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2
+                  className="
+                    h-4
+                    w-4
+                    animate-spin
+                  "
+                />
               ) : (
                 <Send className="h-4 w-4" />
               )}

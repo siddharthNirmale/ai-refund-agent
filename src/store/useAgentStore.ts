@@ -50,7 +50,8 @@ type AgentStore = {
     status:
       | "running"
       | "success"
-      | "failed"
+      | "failed",
+    details?: string
   ) => void;
 
   setResult: (
@@ -108,7 +109,8 @@ export const useAgentStore =
 
     updateLogStatus: (
       id,
-      status
+      status,
+      details
     ) =>
       set((state) => ({
         logs: state.logs.map((log) =>
@@ -116,6 +118,9 @@ export const useAgentStore =
             ? {
                 ...log,
                 status,
+                details:
+                  details ??
+                  log.details,
               }
             : log
         ),
