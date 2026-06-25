@@ -9,17 +9,41 @@ export type ChatMessage = {
   timestamp: string;
 };
 
+export type AgentLog = {
+  id: string;
+  time: string;
+  step: string;
+  status:
+    | "running"
+    | "success"
+    | "failed";
+  details: string;
+};
+
 type AgentStore = {
-  logs: any[];
+  logs: AgentLog[];
+
   decision: string;
+
   reason: string;
+
+  riskScore: number;
+
+  loading: boolean;
 
   messages: ChatMessage[];
 
+  setLoading: (
+    loading: boolean
+  ) => void;
+
+  clearAgentRun: () => void;
+
   setResult: (
-    logs: any[],
+    logs: AgentLog[],
     decision: string,
-    reason: string
+    reason: string,
+    riskScore: number
   ) => void;
 
   addMessage: (
@@ -35,6 +59,10 @@ export const useAgentStore =
 
     reason: "",
 
+    riskScore: 0,
+
+    loading: false,
+
     messages: [
       {
         id: "1",
@@ -45,15 +73,28 @@ export const useAgentStore =
       },
     ],
 
+    setLoading: (loading) =>
+      set({ loading }),
+
+    clearAgentRun: () =>
+      set({
+        logs: [],
+        decision: "",
+        reason: "",
+        riskScore: 0,
+      }),
+
     setResult: (
       logs,
       decision,
-      reason
+      reason,
+      riskScore
     ) =>
       set({
         logs,
         decision,
         reason,
+        riskScore,
       }),
 
     addMessage: (message) =>
