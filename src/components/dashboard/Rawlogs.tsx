@@ -1,11 +1,17 @@
 "use client";
 
+import {
+  useEffect,
+  useRef,
+} from "react";
+
 import { useAgentStore } from "@/store/useAgentStore";
 
 import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Terminal,
 } from "lucide-react";
 
 export default function RawLogs() {
@@ -13,23 +19,50 @@ export default function RawLogs() {
     (state) => state.logs
   );
 
-  if (!logs.length) {
+  const loading =
+    useAgentStore(
+      (state) => state.loading
+    );
+
+  const bottomRef =
+    useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({
+      behavior: "smooth",
+    });
+  }, [logs, loading]);
+
+  if (!logs.length && !loading) {
     return (
       <div
         className="
           flex
-          h-[400px]
+          h-[420px]
+          flex-col
           items-center
           justify-center
           rounded-2xl
           border
           border-slate-800
           bg-slate-950
-          text-sm
-          text-slate-500
         "
       >
-        No agent execution yet
+        <Terminal
+          className="
+            h-10
+            w-10
+            text-slate-700
+          "
+        />
+
+        <p className="mt-4 text-slate-400">
+          Agent terminal idle
+        </p>
+
+        <p className="mt-1 text-xs text-slate-600">
+          Waiting for refund request...
+        </p>
       </div>
     );
   }
@@ -37,28 +70,53 @@ export default function RawLogs() {
   return (
     <div
       className="
-        max-h-[400px]
-        overflow-y-auto
+        flex
+        h-[420px]
+        flex-col
+        overflow-hidden
         rounded-2xl
+        border
+        border-slate-800
         bg-slate-950
-        p-4
         font-mono
         text-xs
       "
     >
-      <div className="mb-4 flex items-center justify-between">
-        <span className="text-slate-400">
-          AGENT TERMINAL
-        </span>
+      {/* Header */}
+
+      <div
+        className="
+          flex
+          items-center
+          justify-between
+          border-b
+          border-slate-800
+          px-4
+          py-3
+        "
+      >
+        <div className="flex items-center gap-2">
+          <Terminal
+            className="
+              h-4
+              w-4
+              text-green-500
+            "
+          />
+
+          <span className="text-slate-300">
+            AGENT TERMINAL
+          </span>
+        </div>
 
         <div className="flex items-center gap-2">
           <div
             className="
               h-2
               w-2
-              animate-pulse
               rounded-full
               bg-green-500
+              animate-pulse
             "
           />
 
@@ -68,94 +126,158 @@ export default function RawLogs() {
         </div>
       </div>
 
-      <div className="space-y-3">
-        {logs.map((log, index) => {
-          const isSuccess =
-            log.status === "success";
+      {/* Logs */}
 
-          const isFailed =
-            log.status === "failed";
+      <div
+        className="
+          flex-1
+          overflow-y-auto
+          p-4
+          space-y-3
+        "
+      >
+        {logs.map(
+          (log, index) => {
+            const isSuccess =
+              log.status ===
+              "success";
 
-          const isRunning =
-            log.status === "running";
+            const isFailed =
+              log.status ===
+              "failed";
 
-          return (
-            <div
-              key={index}
-              className="
-                rounded-lg
-                border
-                border-slate-800
-                bg-black/30
-                p-3
-              "
-            >
-              <div className="flex items-start gap-2">
-                <span className="text-slate-500">
-                  [{index + 1}]
-                </span>
+            const isRunning =
+              log.status ===
+              "running";
 
-                {isSuccess && (
-                  <CheckCircle2
-                    className="
-                      mt-[1px]
-                      h-4
-                      w-4
-                      text-green-400
-                    "
-                  />
-                )}
+            return (
+              <div
+                key={log.id}
+                className="
+                  rounded-lg
+                  border
+                  border-slate-800
+                  bg-black/40
+                  p-3
+                "
+              >
+                <div className="flex items-start gap-3">
+                  <span className="text-slate-600">
+                    [
+                    {log.time ||
+                      `${index + 1}`}
+                    ]
+                  </span>
 
-                {isFailed && (
-                  <XCircle
-                    className="
-                      mt-[1px]
-                      h-4
-                      w-4
-                      text-red-400
-                    "
-                  />
-                )}
-
-                {isRunning && (
-                  <Loader2
-                    className="
-                      mt-[1px]
-                      h-4
-                      w-4
-                      animate-spin
-                      text-yellow-400
-                    "
-                  />
-                )}
-
-                <div className="flex-1">
-                  <p
-                    className={
-                      isSuccess
-                        ? "text-green-400"
-                        : isFailed
-                        ? "text-red-400"
-                        : "text-yellow-400"
-                    }
-                  >
-                    {log.step}
-                  </p>
-
-                  {log.details && (
-                    <p className="mt-1 text-slate-500">
-                      {log.details}
-                    </p>
+                  {isSuccess && (
+                    <CheckCircle2
+                      className="
+                        mt-0.5
+                        h-4
+                        w-4
+                        text-green-400
+                      "
+                    />
                   )}
+
+                  {isFailed && (
+                    <XCircle
+                      className="
+                        mt-0.5
+                        h-4
+                        w-4
+                        text-red-400
+                      "
+                    />
+                  )}
+
+                  {isRunning && (
+                    <Loader2
+                      className="
+                        mt-0.5
+                        h-4
+                        w-4
+                        animate-spin
+                        text-yellow-400
+                      "
+                    />
+                  )}
+
+                  <div className="flex-1">
+                    <p
+                      className={
+                        isSuccess
+                          ? "text-green-400"
+                          : isFailed
+                          ? "text-red-400"
+                          : "text-yellow-400"
+                      }
+                    >
+                      {">"} {log.step}
+                    </p>
+
+                    {log.details && (
+                      <p
+                        className="
+                          mt-1
+                          text-slate-500
+                        "
+                      >
+                        {log.details}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
+            );
+          }
+        )}
+
+        {loading && (
+          <div
+            className="
+              rounded-lg
+              border
+              border-yellow-900
+              bg-yellow-950/20
+              p-3
+            "
+          >
+            <div className="flex items-center gap-3">
+              <Loader2
+                className="
+                  h-4
+                  w-4
+                  animate-spin
+                  text-yellow-400
+                "
+              />
+
+              <span className="text-yellow-400">
+                Executing refund
+                validation workflow...
+              </span>
             </div>
-          );
-        })}
+          </div>
+        )}
+
+        <div ref={bottomRef} />
       </div>
 
-      <div className="mt-4 border-t border-slate-800 pt-3 text-slate-500">
-        waiting for next tool call...
+      {/* Footer */}
+
+      <div
+        className="
+          border-t
+          border-slate-800
+          px-4
+          py-3
+          text-slate-500
+        "
+      >
+        {loading
+          ? "agent running..."
+          : "execution completed"}
       </div>
     </div>
   );
