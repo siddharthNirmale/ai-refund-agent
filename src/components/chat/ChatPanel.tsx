@@ -7,12 +7,28 @@ import MessageBubble from "./MessageBubble";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useCustomerStore } from "@/store/useCustomerStore";
+import { customers } from "@/data/customers";
 
 import { useAgentStore } from "@/store/useAgentStore";
 
 import { Send, Mic } from "lucide-react";
 
 export default function ChatPanel() {
+
+  const selectedCustomerId =
+    useCustomerStore(
+      (state) =>
+        state.selectedCustomerId
+    );
+
+  const customer =
+    customers.find(
+      (c) =>
+        c.id ===
+        selectedCustomerId
+    );
+
   const [input, setInput] =
     useState("");
 
@@ -61,7 +77,7 @@ export default function ChatPanel() {
 
               body: JSON.stringify({
                 customerId:
-                  "CUST003",
+                  selectedCustomerId,
                 message:
                   userInput,
               }),
@@ -103,7 +119,7 @@ Reason: ${result.reason}`,
   return (
     <section className="h-full min-h-0 flex flex-col bg-slate-100 p-4">
       <Card className="flex-1 min-h-0 flex flex-col rounded-3xl">
-        
+
         {/* Header */}
         <div className="shrink-0 border-b px-6 py-5">
           <h2 className="text-2xl font-semibold">
@@ -119,8 +135,10 @@ Reason: ${result.reason}`,
         <div className="shrink-0 border-b px-6 py-4">
           <div className="rounded-xl bg-slate-100 p-4">
             <span className="font-medium">
-              Customer: CUST003
-              (Sarah Johnson)
+              Customer:
+              {customer?.id}
+              {" "}
+              ({customer?.name})
             </span>
           </div>
         </div>
