@@ -235,7 +235,9 @@ Risk Score: ${result.riskScore}%`,
             py-6
           "
         >
-          {messages.map(
+          {messages
+          .filter(Boolean)
+          .map(
             (message) => (
               <MessageBubble
                 key={message.id}

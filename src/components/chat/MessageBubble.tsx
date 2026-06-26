@@ -1,13 +1,13 @@
 type Props = {
-  role: "user" | "assistant";
-  content: string;
-  timestamp: string;
+  role?: "user" | "assistant";
+  content?: string;
+  timestamp?: string;
 };
 
 export default function MessageBubble({
-  role,
-  content,
-  timestamp,
+  role = "assistant",
+  content = "",
+  timestamp = "",
 }: Props) {
   const isUser = role === "user";
 
@@ -24,6 +24,7 @@ export default function MessageBubble({
           px-4
           py-3
           shadow-sm
+          break-words
           ${
             isUser
               ? "bg-violet-600 text-white"
@@ -31,19 +32,21 @@ export default function MessageBubble({
           }
         `}
       >
-        <p className="text-sm leading-relaxed">
+        <p className="text-sm leading-relaxed whitespace-pre-wrap">
           {content}
         </p>
 
-        <p
-          className={`mt-2 text-xs ${
-            isUser
-              ? "text-violet-200"
-              : "text-slate-500"
-          }`}
-        >
-          {timestamp}
-        </p>
+        {timestamp && (
+          <p
+            className={`mt-2 text-xs ${
+              isUser
+                ? "text-violet-200"
+                : "text-slate-500"
+            }`}
+          >
+            {timestamp}
+          </p>
+        )}
       </div>
     </div>
   );
