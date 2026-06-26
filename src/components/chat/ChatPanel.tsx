@@ -80,101 +80,90 @@ export default function ChatPanel() {
     });
   }, [messages, loading]);
 
-  const handleSend =
-    async () => {
-      if (
-        !input.trim() ||
-        loading
-      ) {
-        return;
+ const handleSend = async () => {
+  if (!input.trim() || loading) {
+    return;
+  }
+
+  addMessage({
+    id: crypto.randomUUID(),
+    role: "user",
+    content: input,
+    timestamp: new Date().toLocaleTimeString(),
+  });
+
+  const userInput = input;
+
+  setInput("");
+
+  clearAgentRun();
+  setLoading(true);
+
+  try {
+    const response = await fetch("/api/refund", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customerId: selectedCustomerId,
+        message: userInput,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("API request failed");
+    }
+
+    const result = await response.json();
+
+    setResult(
+      result.logs,
+      result.decision,
+      result.reason,
+      result.riskScore
+    );
+
+    addMessage({
+      id: crypto.randomUUID(),
+
+      role: "assistant",
+
+      content: `${
+        result.explanation ??
+        "I have finished reviewing your refund request."
       }
 
-      addMessage({
-        id: crypto.randomUUID(),
-        role: "user",
-        content: input,
-        timestamp:
-          new Date().toLocaleTimeString(),
-      });
+━━━━━━━━━━━━━━━━━━━━
 
-      const userInput = input;
+📋 Decision: ${result.decision.toUpperCase()}
 
-      setInput("");
+📝 Reason:
+${result.reason}
 
-      clearAgentRun();
+⚠️ Risk Score: ${result.riskScore}%`,
 
-      setLoading(true);
+      timestamp: new Date().toLocaleTimeString(),
+    });
+  } catch (error) {
+    console.error(error);
 
-      try {
-        const response =
-          await fetch(
-            "/api/refund",
-            {
-              method: "POST",
+    addMessage({
+      id: crypto.randomUUID(),
 
-              headers: {
-                "Content-Type":
-                  "application/json",
-              },
+      role: "assistant",
 
-              body: JSON.stringify({
-                customerId:
-                  selectedCustomerId,
+      content:
+        "Sorry, I couldn't process your refund request right now. Please try again in a moment.",
 
-                message:
-                  userInput,
-              }),
-            }
-          );
+      timestamp: new Date().toLocaleTimeString(),
+    });
+  } finally {
+    setLoading(false);
+  }
+};
 
-        if (!response.ok) {
-          throw new Error(
-            "API request failed"
-          );
-        }
 
-        const result =
-          await response.json();
-
-        setResult(
-          result.logs,
-          result.decision,
-          result.reason,
-          result.riskScore
-        );
-
-        addMessage({
-          id: crypto.randomUUID(),
-
-          role: "assistant",
-
-          content: `Decision: ${result.decision.toUpperCase()}
-
-Reason: ${result.reason}
-
-Risk Score: ${result.riskScore}%`,
-
-          timestamp:
-            new Date().toLocaleTimeString(),
-        });
-      } catch (error) {
-        console.error(error);
-
-        addMessage({
-          id: crypto.randomUUID(),
-
-          role: "assistant",
-
-          content:
-            "Unable to process refund request. Please try again.",
-
-          timestamp:
-            new Date().toLocaleTimeString(),
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
 
   return (
     <section className="flex h-full min-h-0 flex-col bg-slate-100 p-4">
