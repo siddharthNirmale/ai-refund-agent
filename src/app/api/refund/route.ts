@@ -1,37 +1,56 @@
 import { NextResponse } from "next/server";
 
-const HF_TOKEN = process.env.HF_TOKEN;
+import { customers } from "@/data/customers";
+import { orders } from "@/data/orders";
 
-const MODEL_URL =
-  "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct";
+import { checkRefund } from "@/lib/refund/checkRefund";
 
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const { customerId, message } = await req.json();
 
-    const response = await fetch(MODEL_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${HF_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        inputs: message,
-      }),
-    });
+    // Find customer
+    const customer = customers.find(
+      (c) => c.id === customerId
+    );
 
-    const data = await response.json();
+    if (!customer) {
+      return NextResponse.json(
+        {
+          error: "Customer not found",
+        },
+        { status: 404 }
+      );
+    }
 
-    console.log("HF Response:");
-    console.log(data);
+    // Find customer's order
+    const order = orders.find(
+      (o) => o.customerId === customerId
+    );
 
-    return NextResponse.json(data);
+    if (!order) {
+      return NextResponse.json(
+        {
+          error: "Order not found",
+        },
+        { status: 404 }
+      );
+    }
+
+    // Run refund rule engine
+    const result = checkRefund(customer, order);
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error(error);
+    console.error("Refund API Error:", error);
 
     return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
+      {
+        error: "Internal Server Error",
+      },
+      {
+        status: 500,
+      }
     );
   }
 }
