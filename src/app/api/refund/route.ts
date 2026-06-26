@@ -5,10 +5,10 @@ import { orders } from "@/data/orders";
 
 import { checkRefund } from "@/lib/refund/checkRefund";
 
-const HF_TOKEN = process.env.HF_TOKEN;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-const MODEL_URL =
-  "https://router.huggingface.co/hf-inference/models/Qwen/Qwen3-4B-Instruct-2507";
+const GROQ_URL =
+  "https://api.groq.com/openai/v1/chat/completions";
 
 export async function POST(req: Request) {
   try {
@@ -21,9 +21,7 @@ export async function POST(req: Request) {
 
     if (!customer) {
       return NextResponse.json(
-        {
-          error: "Customer not found",
-        },
+        { error: "Customer not found" },
         { status: 404 }
       );
     }
@@ -35,9 +33,7 @@ export async function POST(req: Request) {
 
     if (!order) {
       return NextResponse.json(
-        {
-          error: "Order not found",
-        },
+        { error: "Order not found" },
         { status: 404 }
       );
     }
@@ -45,7 +41,7 @@ export async function POST(req: Request) {
     // Run refund rule engine
     const result = checkRefund(customer, order);
 
-    // Prompt for Qwen
+    // AI Prompt
     const prompt = `
 You are RefundPilot AI.
 
@@ -73,49 +69,99 @@ ${result.decision}
 Reason:
 ${result.reason}
 
-Write a friendly explanation for the customer.
+Explain this decision to the customer.
 
 Rules:
-- Do NOT change the decision.
-- Do NOT mention internal systems.
-- Be polite.
-- Maximum 80 words.
+- Don't change the decision.
+- Be friendly.
+- Keep it under 80 words.
+- Don't mention internal systems.
 `;
 
-    // Call Hugging Face
-    const hfResponse = await fetch(MODEL_URL, {
+    // Call Groq
+    const groqResponse = await fetch(GROQ_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${HF_TOKEN}`,
+        Authorization: `Bearer ${GROQ_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        inputs: prompt,
-        parameters: {
-          max_new_tokens: 120,
-          temperature: 0.2,
-          return_full_text: false,
-        },
+        model: "llama-3.3-70b-versatile",
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are a professional customer support refund assistant.",
+          },
+          {
+            role: "user",
+            content: prompt,
+          },
+        ],
+        temperature: 0.2,
+        max_tokens: 120,
       }),
     });
 
-    if (!hfResponse.ok) {
-      const error = await hfResponse.text();
+    if (!groqResponse.ok) {
+      const error = await groqResponse.text();
 
-      console.error("HF Error:", error);
+      console.error("Groq Error:", error);
 
-      throw new Error("Hugging Face request failed");
+      throw new Error("Groq request failed");
     }
 
-    const hfData = await hfResponse.json();
+    const groqData = await groqResponse.json();
 
-    console.log("=================================");
-    console.log("HF RAW RESPONSE");
-    console.log(JSON.stringify(hfData, null, 2));
-    console.log("=================================");
+    console.log("========== GROQ ==========");
+    console.log(JSON.stringify(groqData, null, 2));
+    console.log("==========================");
 
-    // We'll use hfData in the next step.
-    return NextResponse.json(result);
+    const explanation =
+      groqData.choices?.[0]?.message?.content ??
+      result.reason;
+
+    const logs = [
+      {
+        id: crypto.randomUUID(),
+        time: new Date().toLocaleTimeString(),
+        step: "Customer Loaded",
+        status: "success",
+        details: `${customer.name} (${customer.tier}) profile loaded.`,
+      },
+      {
+        id: crypto.randomUUID(),
+        time: new Date().toLocaleTimeString(),
+        step: "Order Found",
+        status: "success",
+        details: `${order.product} • $${order.amount}`,
+      },
+      {
+        id: crypto.randomUUID(),
+        time: new Date().toLocaleTimeString(),
+        step: "Refund Rules Evaluated",
+        status:
+          result.decision === "approved"
+            ? "success"
+            : "failed",
+        details: result.reason,
+      },
+      {
+        id: crypto.randomUUID(),
+        time: new Date().toLocaleTimeString(),
+        step: "AI Response Generated",
+        status: "success",
+        details: "Groq generated a customer-friendly explanation.",
+      },
+    ];
+
+    return NextResponse.json({
+      decision: result.decision,
+      reason: result.reason,
+      riskScore: result.riskScore,
+      explanation,
+      logs,
+    });
 
   } catch (error) {
     console.error("Refund API Error:", error);
