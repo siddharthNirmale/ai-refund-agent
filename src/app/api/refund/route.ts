@@ -5,6 +5,11 @@ import { orders } from "@/data/orders";
 
 import { checkRefund } from "@/lib/refund/checkRefund";
 
+const HF_TOKEN = process.env.HF_TOKEN;
+
+const MODEL_URL =
+  "https://api-inference.huggingface.co/models/Qwen/Qwen2.5-72B-Instruct";
+
 export async function POST(req: Request) {
   try {
     const { customerId, message } = await req.json();
@@ -39,6 +44,37 @@ export async function POST(req: Request) {
 
     // Run refund rule engine
     const result = checkRefund(customer, order);
+    const prompt = `
+You are RefundPilot AI.
+
+A refund decision has ALREADY been made by the refund engine.
+
+DO NOT change the decision.
+
+Customer:
+Name: ${customer.name}
+Tier: ${customer.tier}
+Chargebacks: ${customer.chargebacks}
+
+Order:
+Product: ${order.product}
+Category: ${order.category}
+Amount: $${order.amount}
+Final Sale: ${order.finalSale}
+
+Customer Message:
+${message}
+
+Decision:
+${result.decision}
+
+Reason:
+${result.reason}
+
+Write a short, friendly explanation for the customer.
+Do not mention internal systems.
+Keep it under 80 words.
+`;
 
     return NextResponse.json(result);
   } catch (error) {
