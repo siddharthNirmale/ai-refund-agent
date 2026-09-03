@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, Suspense } from "react";
 import dynamic from "next/dynamic";
 import {
@@ -12,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAgentStore } from "@/store/useAgentStore";
+import { useCustomerStore } from "@/store/useCustomerStore";
 import DecisionCard from "./DecisionCard";
 
 const Timeline = dynamic(() => import("./Timeline"), {
@@ -46,12 +46,23 @@ export default function ReasoningPanel() {
     "timeline"
   );
 
+  const selectedCustomerId = useCustomerStore(
+    (state) => state.selectedCustomerId
+  );
+
   const decision = useAgentStore((state) => state.decision);
   const reason = useAgentStore((state) => state.reason);
   const riskScore = useAgentStore((state) => state.riskScore);
   const loading = useAgentStore((state) => state.loading);
   const processingStage = useAgentStore((state) => state.processingStage);
   const logs = useAgentStore((state) => state.logs);
+
+  // Cleanly reset inspector tab to timeline on customer switch during render
+  const [prevCustomerId, setPrevCustomerId] = useState(selectedCustomerId);
+  if (prevCustomerId !== selectedCustomerId) {
+    setPrevCustomerId(selectedCustomerId);
+    setActiveTab("timeline");
+  }
 
   return (
     <aside className="flex h-full min-h-0 flex-col bg-[#0A0C11] text-zinc-100">

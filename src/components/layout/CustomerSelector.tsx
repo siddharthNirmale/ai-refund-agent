@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import { customers } from "@/data/customers";
 import { useCustomerStore } from "@/store/useCustomerStore";
-import { useAgentStore } from "@/store/useAgentStore";
 import { ChevronDown, Check, Search, ShieldAlert } from "lucide-react";
 
 const tierStyles: Record<string, { badge: string; dot: string }> = {
@@ -32,7 +31,6 @@ export default function CustomerSelector() {
   const setSelectedCustomerId = useCustomerStore(
     (state) => state.setSelectedCustomerId
   );
-  const clearAgentRun = useAgentStore((state) => state.clearAgentRun);
 
   const selectedCustomer =
     customers.find((c) => c.id === selectedCustomerId) || customers[0];
@@ -60,7 +58,6 @@ export default function CustomerSelector() {
   const handleSelect = (id: string) => {
     if (id !== selectedCustomerId) {
       setSelectedCustomerId(id);
-      clearAgentRun();
     }
     setOpen(false);
     setSearch("");

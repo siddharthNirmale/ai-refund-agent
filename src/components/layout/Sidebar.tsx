@@ -34,13 +34,11 @@ export default function Sidebar() {
   const riskScore = useAgentStore((state) => state.riskScore);
   const loading = useAgentStore((state) => state.loading);
   const logs = useAgentStore((state) => state.logs);
-  const clearAgentRun = useAgentStore((state) => state.clearAgentRun);
-  const clearMessages = useAgentStore((state) => state.clearMessages);
+  const resetForCustomer = useAgentStore((state) => state.resetForCustomer);
   const setShowIntro = useAgentStore((state) => state.setShowIntro);
 
   const handleReset = () => {
-    clearAgentRun();
-    clearMessages();
+    resetForCustomer(selectedCustomerId);
   };
 
   const sentiment = riskScore > 60 ? "Elevated Risk" : "Normal";

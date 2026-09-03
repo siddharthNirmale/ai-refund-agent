@@ -1,6 +1,8 @@
 "use client";
 
 import { create } from "zustand";
+import { customers } from "@/data/customers";
+import { orders } from "@/data/orders";
 
 export type ChatMessage = {
   id: string;
@@ -19,6 +21,27 @@ export type AgentLog = {
     | "failed";
   details: string;
 };
+
+export function createInitialMessages(customerId: string): ChatMessage[] {
+  const customer = customers.find((c) => c.id === customerId) || customers[0];
+  const order = orders.find((o) => o.customerId === customerId);
+
+  const firstName = customer ? customer.name.split(" ")[0] : "there";
+  const orderContext = order
+    ? ` I have retrieved your ${customer.tier} tier profile and your recent order for the ${order.product} ($${order.amount}).`
+    : customer
+    ? ` I have retrieved your ${customer.tier} tier profile.`
+    : "";
+
+  return [
+    {
+      id: `welcome-${customer.id}`,
+      role: "assistant",
+      content: `Hello ${firstName}! I am your autonomous refund operations assistant.${orderContext} How can I assist you with this transaction today?`,
+      timestamp: "Just now",
+    },
+  ];
+}
 
 type AgentStore = {
   logs: AgentLog[];
@@ -71,7 +94,9 @@ type AgentStore = {
     message: ChatMessage
   ) => void;
 
-  clearMessages: () => void;
+  clearMessages: (customerId?: string) => void;
+
+  resetForCustomer: (customerId: string) => void;
 };
 
 export const useAgentStore =
@@ -94,15 +119,7 @@ export const useAgentStore =
 
     setShowIntro: (show) => set({ showIntro: show }),
 
-    messages: [
-      {
-        id: "welcome",
-        role: "assistant",
-        content:
-          "Hello! I am your autonomous refund operations assistant. I can inspect transaction histories, validate policy rules, and resolve return requests. How can I assist you today?",
-        timestamp: "Now",
-      },
-    ],
+    messages: createInitialMessages("CUST003"),
 
     setLoading: (loading) =>
       set({ loading }),
@@ -114,6 +131,7 @@ export const useAgentStore =
         reason: "",
         riskScore: 0,
         loading: false,
+        processingStage: "",
       }),
 
     addLog: (log) =>
@@ -152,6 +170,7 @@ export const useAgentStore =
         reason,
         riskScore,
         loading: false,
+        processingStage: "",
       }),
 
     addMessage: (message) =>
@@ -162,16 +181,19 @@ export const useAgentStore =
         ],
       })),
 
-    clearMessages: () =>
+    clearMessages: (customerId) =>
       set({
-        messages: [
-          {
-            id: "welcome",
-            role: "assistant",
-            content:
-              "Hello! I am your autonomous refund operations assistant. I can inspect transaction histories, validate policy rules, and resolve return requests. How can I assist you today?",
-            timestamp: "Now",
-          },
-        ],
+        messages: createInitialMessages(customerId || "CUST003"),
+      }),
+
+    resetForCustomer: (customerId: string) =>
+      set({
+        logs: [],
+        decision: "",
+        reason: "",
+        riskScore: 0,
+        loading: false,
+        processingStage: "",
+        messages: createInitialMessages(customerId),
       }),
   }));

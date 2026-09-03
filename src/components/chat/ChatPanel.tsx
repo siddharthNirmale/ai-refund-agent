@@ -17,6 +17,7 @@ import {
 export default function ChatPanel() {
   const [input, setInput] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const selectedCustomerId = useCustomerStore(
     (state) => state.selectedCustomerId
@@ -34,8 +35,24 @@ export default function ChatPanel() {
   const setLoading = useAgentStore((state) => state.setLoading);
   const processingStage = useAgentStore((state) => state.processingStage);
   const setProcessingStage = useAgentStore((state) => state.setProcessingStage);
-  const clearAgentRun = useAgentStore((state) => state.clearAgentRun);
-  const clearMessages = useAgentStore((state) => state.clearMessages);
+  const resetForCustomer = useAgentStore((state) => state.resetForCustomer);
+
+  // Cleanly wipe unsent input on customer change during render
+  const [prevCustomerId, setPrevCustomerId] = useState(selectedCustomerId);
+  if (prevCustomerId !== selectedCustomerId) {
+    setPrevCustomerId(selectedCustomerId);
+    setInput("");
+  }
+
+  // Abort any in-flight fetch when switching customers
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
+  }, [selectedCustomerId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -46,6 +63,13 @@ export default function ChatPanel() {
   const handleSend = async (messageText?: string) => {
     const textToSend = (messageText ?? input).trim();
     if (!textToSend || loading) return;
+
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+    const requestCustomerId = selectedCustomerId;
 
     // Capture recent history before adding the new message
     const history = messages
@@ -78,20 +102,39 @@ export default function ChatPanel() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          customerId: selectedCustomerId,
+          customerId: requestCustomerId,
           message: textToSend,
           history,
         }),
+        signal: controller.signal,
       });
 
       // Purposeful, realistic background validation progression (~240ms micro-intervals)
       await new Promise((r) => setTimeout(r, 260));
+      if (
+        controller.signal.aborted ||
+        useCustomerStore.getState().selectedCustomerId !== requestCustomerId
+      ) {
+        return;
+      }
       setProcessingStage("Evaluating return policy window & clearance rules...");
 
       await new Promise((r) => setTimeout(r, 280));
+      if (
+        controller.signal.aborted ||
+        useCustomerStore.getState().selectedCustomerId !== requestCustomerId
+      ) {
+        return;
+      }
       setProcessingStage("Checking fraud indicators & transaction risk...");
 
       const response = await apiPromise;
+      if (
+        controller.signal.aborted ||
+        useCustomerStore.getState().selectedCustomerId !== requestCustomerId
+      ) {
+        return;
+      }
       if (!response.ok) {
         throw new Error("API request failed");
       }
@@ -99,6 +142,12 @@ export default function ChatPanel() {
       const result = await response.json();
 
       await new Promise((r) => setTimeout(r, 200));
+      if (
+        controller.signal.aborted ||
+        useCustomerStore.getState().selectedCustomerId !== requestCustomerId
+      ) {
+        return;
+      }
       setProcessingStage("Synthesizing personalized customer communication...");
 
       setResult(
@@ -120,7 +169,14 @@ export default function ChatPanel() {
           minute: "2-digit",
         }),
       });
-    } catch (error) {
+    } catch (error: unknown) {
+      if (
+        controller.signal.aborted ||
+        useCustomerStore.getState().selectedCustomerId !== requestCustomerId ||
+        (error instanceof DOMException && error.name === "AbortError")
+      ) {
+        return;
+      }
       console.error(error);
       addMessage({
         id: crypto.randomUUID(),
@@ -133,8 +189,10 @@ export default function ChatPanel() {
         }),
       });
     } finally {
-      setProcessingStage("");
-      setLoading(false);
+      if (useCustomerStore.getState().selectedCustomerId === requestCustomerId) {
+        setProcessingStage("");
+        setLoading(false);
+      }
     }
   };
 
@@ -179,10 +237,13 @@ export default function ChatPanel() {
           <button
             type="button"
             onClick={() => {
-              clearMessages();
-              clearAgentRun();
+              if (abortControllerRef.current) {
+                abortControllerRef.current.abort();
+                abortControllerRef.current = null;
+              }
+              resetForCustomer(selectedCustomerId);
             }}
-            title="Clear Chat History"
+            title="Reset Customer Chat"
             className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-white/[0.05] hover:text-zinc-200"
           >
             <Trash2 className="h-3.5 w-3.5" />
