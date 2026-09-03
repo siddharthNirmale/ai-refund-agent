@@ -45,6 +45,15 @@ export default function ChatPanel() {
     const textToSend = (messageText ?? input).trim();
     if (!textToSend || loading) return;
 
+    // Capture recent history before adding the new message
+    const history = messages
+      .filter((m) => m && m.content)
+      .slice(-8)
+      .map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
     addMessage({
       id: crypto.randomUUID(),
       role: "user",
@@ -56,7 +65,6 @@ export default function ChatPanel() {
     });
 
     setInput("");
-    clearAgentRun();
     setLoading(true);
 
     try {
@@ -68,6 +76,7 @@ export default function ChatPanel() {
         body: JSON.stringify({
           customerId: selectedCustomerId,
           message: textToSend,
+          history,
         }),
       });
 
@@ -153,7 +162,10 @@ export default function ChatPanel() {
 
           <button
             type="button"
-            onClick={clearMessages}
+            onClick={() => {
+              clearMessages();
+              clearAgentRun();
+            }}
             title="Clear Chat History"
             className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-white/[0.05] hover:text-zinc-200"
           >

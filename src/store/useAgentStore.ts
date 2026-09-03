@@ -85,7 +85,7 @@ export const useAgentStore =
         id: "welcome",
         role: "assistant",
         content:
-          "Hello! I can help process refund requests. Please describe your issue.",
+          "Hello! I am your autonomous refund operations assistant. I can inspect transaction histories, validate policy rules, and resolve return requests. How can I assist you today?",
         timestamp: "Now",
       },
     ],
@@ -155,7 +155,7 @@ export const useAgentStore =
             id: "welcome",
             role: "assistant",
             content:
-              "Hello! I can help process refund requests. Please describe your issue.",
+              "Hello! I am your autonomous refund operations assistant. I can inspect transaction histories, validate policy rules, and resolve return requests. How can I assist you today?",
             timestamp: "Now",
           },
         ],
