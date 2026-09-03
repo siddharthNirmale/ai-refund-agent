@@ -1,78 +1,39 @@
 "use client";
 
-import {
-  useState,
-  useEffect,
-  useRef,
-} from "react";
-
+import { useState, useEffect, useRef } from "react";
 import MessageBubble from "./MessageBubble";
-
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-
 import { customers } from "@/data/customers";
-
+import { orders } from "@/data/orders";
 import { useAgentStore } from "@/store/useAgentStore";
 import { useCustomerStore } from "@/store/useCustomerStore";
-
 import {
   Send,
-  Mic,
   Loader2,
+  Trash2,
+  Sparkles,
+  ShoppingBag,
 } from "lucide-react";
 
 export default function ChatPanel() {
-  const [input, setInput] =
-    useState("");
+  const [input, setInput] = useState("");
+  const bottomRef = useRef<HTMLDivElement>(null);
 
-  const bottomRef =
-    useRef<HTMLDivElement>(null);
-
-  const selectedCustomerId =
-    useCustomerStore(
-      (state) =>
-        state.selectedCustomerId
-    );
+  const selectedCustomerId = useCustomerStore(
+    (state) => state.selectedCustomerId
+  );
 
   const customer =
-    customers.find(
-      (c) =>
-        c.id ===
-        selectedCustomerId
-    );
+    customers.find((c) => c.id === selectedCustomerId) || customers[0];
 
-  const messages =
-    useAgentStore(
-      (state) => state.messages
-    );
+  const order = orders.find((o) => o.customerId === selectedCustomerId);
 
-  const addMessage =
-    useAgentStore(
-      (state) => state.addMessage
-    );
-
-  const setResult =
-    useAgentStore(
-      (state) => state.setResult
-    );
-
-  const loading =
-    useAgentStore(
-      (state) => state.loading
-    );
-
-  const setLoading =
-    useAgentStore(
-      (state) => state.setLoading
-    );
-
-  const clearAgentRun =
-    useAgentStore(
-      (state) =>
-        state.clearAgentRun
-    );
+  const messages = useAgentStore((state) => state.messages);
+  const addMessage = useAgentStore((state) => state.addMessage);
+  const setResult = useAgentStore((state) => state.setResult);
+  const loading = useAgentStore((state) => state.loading);
+  const setLoading = useAgentStore((state) => state.setLoading);
+  const clearAgentRun = useAgentStore((state) => state.clearAgentRun);
+  const clearMessages = useAgentStore((state) => state.clearMessages);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({
@@ -80,258 +41,264 @@ export default function ChatPanel() {
     });
   }, [messages, loading]);
 
- const handleSend = async () => {
-  if (!input.trim() || loading) {
-    return;
-  }
+  const handleSend = async (messageText?: string) => {
+    const textToSend = (messageText ?? input).trim();
+    if (!textToSend || loading) return;
 
-  addMessage({
-    id: crypto.randomUUID(),
-    role: "user",
-    content: input,
-    timestamp: new Date().toLocaleTimeString(),
-  });
-
-  const userInput = input;
-
-  setInput("");
-
-  clearAgentRun();
-  setLoading(true);
-
-  try {
-    const response = await fetch("/api/refund", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        customerId: selectedCustomerId,
-        message: userInput,
+    addMessage({
+      id: crypto.randomUUID(),
+      role: "user",
+      content: textToSend,
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
       }),
     });
 
-    if (!response.ok) {
-      throw new Error("API request failed");
-    }
+    setInput("");
+    clearAgentRun();
+    setLoading(true);
 
-    const result = await response.json();
+    try {
+      const response = await fetch("/api/refund", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          customerId: selectedCustomerId,
+          message: textToSend,
+        }),
+      });
 
-    setResult(
-      result.logs,
-      result.decision,
-      result.reason,
-      result.riskScore
-    );
-
-    addMessage({
-      id: crypto.randomUUID(),
-
-      role: "assistant",
-
-      content: `${
-        result.explanation ??
-        "I have finished reviewing your refund request."
+      if (!response.ok) {
+        throw new Error("API request failed");
       }
 
-━━━━━━━━━━━━━━━━━━━━
+      const result = await response.json();
 
-📋 Decision: ${result.decision.toUpperCase()}
+      setResult(
+        result.logs,
+        result.decision,
+        result.reason,
+        result.riskScore
+      );
 
-📝 Reason:
-${result.reason}
+      // Clean, conversational assistant message without AI-slop ASCII dividers
+      addMessage({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          result.explanation ??
+          "I have evaluated your refund request against our return policies.",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      });
+    } catch (error) {
+      console.error(error);
+      addMessage({
+        id: crypto.randomUUID(),
+        role: "assistant",
+        content:
+          "Unable to process this refund request at this moment. Please verify your connection or retry.",
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
-⚠️ Risk Score: ${result.riskScore}%`,
-
-      timestamp: new Date().toLocaleTimeString(),
-    });
-  } catch (error) {
-    console.error(error);
-
-    addMessage({
-      id: crypto.randomUUID(),
-
-      role: "assistant",
-
-      content:
-        "Sorry, I couldn't process your refund request right now. Please try again in a moment.",
-
-      timestamp: new Date().toLocaleTimeString(),
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  const quickPrompts = [
+    order
+      ? `I would like to request a refund for the ${order.product}.`
+      : "I need to return my latest order.",
+    "The product arrived damaged and isn't working as expected.",
+    "Can you check if my order is eligible for a return under policy?",
+  ];
 
   return (
-    <section className="flex h-full min-h-0 flex-col bg-slate-100 p-4">
-      <Card className="flex min-h-0 flex-1 flex-col rounded-3xl">
-        
-        {/* Header */}
-
-        <div className="shrink-0 border-b px-6 py-5">
-          <h2 className="text-2xl font-semibold">
-            Customer Support Chat
-          </h2>
-
-          <p className="text-sm text-green-600">
-            ● Connected
+    <section className="flex h-full min-h-0 flex-1 flex-col bg-[#0D0F15] text-zinc-100">
+      {/* Workspace Header */}
+      <header className="flex shrink-0 items-center justify-between px-6 py-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-semibold tracking-tight text-white">
+              Customer Support Desk
+            </h2>
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-400">
+              Session Live
+            </span>
+          </div>
+          <p className="mt-0.5 text-[11px] text-zinc-400">
+            Resolving on behalf of {customer.name} ({customer.tier} Tier)
           </p>
         </div>
 
-        {/* Customer */}
-
-        <div className="shrink-0 border-b px-6 py-4">
-          <div className="rounded-xl bg-slate-100 p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">
-                  {customer?.name}
-                </p>
-
-                <p className="text-sm text-slate-500">
-                  {customer?.id}
-                </p>
-              </div>
-
-              <div
-                className="
-                  rounded-full
-                  bg-violet-100
-                  px-3
-                  py-1
-                  text-xs
-                  font-medium
-                  text-violet-700
-                "
-              >
-                {customer?.tier}
-              </div>
+        <div className="flex items-center gap-2">
+          {order && (
+            <div className="hidden sm:flex items-center gap-1.5 rounded-xl bg-white/[0.03] px-3 py-1.5 text-xs text-zinc-300">
+              <ShoppingBag className="h-3.5 w-3.5 text-zinc-400" />
+              <span className="font-medium text-zinc-200 truncate max-w-[160px]">
+                {order.product}
+              </span>
+              <span className="text-zinc-500">•</span>
+              <span className="font-mono text-zinc-400">${order.amount}</span>
             </div>
-          </div>
-        </div>
-
-        {/* Messages */}
-
-        <div
-          className="
-            flex-1
-            overflow-y-auto
-            space-y-5
-            px-6
-            py-6
-          "
-        >
-          {messages
-          .filter(Boolean)
-          .map(
-            (message) => (
-              <MessageBubble
-                key={message.id}
-                role={message.role}
-                content={
-                  message.content
-                }
-                timestamp={
-                  message.timestamp
-                }
-              />
-            )
           )}
 
-          {loading && (
-            <div
+          <button
+            type="button"
+            onClick={clearMessages}
+            title="Clear Chat History"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-white/[0.05] hover:text-zinc-200"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </header>
+
+      {/* Message History Feed */}
+      <div className="flex-1 overflow-y-auto space-y-4 px-6 py-4">
+        {messages.filter(Boolean).map((message) => (
+          <MessageBubble
+            key={message.id}
+            role={message.role}
+            content={message.content}
+            timestamp={message.timestamp}
+          />
+        ))}
+
+        {loading && (
+          <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-4 py-3 text-xs text-zinc-300 ring-1 ring-white/[0.05]">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-400" />
+            <span className="font-medium">
+              Evaluating refund policy criteria and customer order history...
+            </span>
+          </div>
+        )}
+
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Interactive Footer & Composer */}
+      <div className="shrink-0 p-4 pt-2">
+        {/* Quick Contextual Prompts */}
+        <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
+          <div className="flex items-center gap-1 text-[11px] text-zinc-400 px-1">
+            <Sparkles className="h-3 w-3 text-violet-400" />
+            <span>Suggested:</span>
+          </div>
+
+          {quickPrompts.map((prompt, idx) => (
+            <button
+              key={idx}
+              type="button"
+              disabled={loading}
+              onClick={() => handleSend(prompt)}
               className="
-                flex
-                items-center
-                gap-3
-                rounded-xl
-                bg-slate-100
-                p-3
-                text-slate-600
+                truncate
+                max-w-[280px]
+                sm:max-w-[360px]
+                rounded-lg
+                bg-white/[0.03]
+                px-2.5
+                py-1
+                text-left
+                text-[11px]
+                text-zinc-300
+                transition-colors
+                hover:bg-white/[0.07]
+                hover:text-white
+                disabled:opacity-40
               "
             >
-              <Loader2
-                className="
-                  h-4
-                  w-4
-                  animate-spin
-                "
-              />
-
-              <span>
-                AI agent is validating
-                refund policies...
-              </span>
-            </div>
-          )}
-
-          <div ref={bottomRef} />
+              {prompt}
+            </button>
+          ))}
         </div>
 
-        {/* Input */}
-
-        <div className="shrink-0 border-t p-4">
-          <div className="flex gap-2">
-            <Input
-              value={input}
-              disabled={loading}
-              onChange={(e) =>
-                setInput(
-                  e.target.value
-                )
+        {/* Input Surface */}
+        <div
+          className="
+            flex
+            items-center
+            gap-2
+            rounded-2xl
+            bg-white/[0.04]
+            p-1.5
+            pr-2
+            transition-all
+            focus-within:bg-white/[0.06]
+            focus-within:ring-1
+            focus-within:ring-violet-500/40
+          "
+        >
+          <input
+            value={input}
+            disabled={loading}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey && !loading) {
+                e.preventDefault();
+                handleSend();
               }
-              onKeyDown={(e) => {
-                if (
-                  e.key ===
-                    "Enter" &&
-                  !loading
-                ) {
-                  handleSend();
-                }
-              }}
-              placeholder="Request a refund..."
-              className="h-12"
-            />
+            }}
+            placeholder={`Message RefundPilot regarding ${customer.name}'s order...`}
+            className="
+              h-11
+              flex-1
+              bg-transparent
+              px-3
+              text-xs
+              text-zinc-100
+              placeholder-zinc-500
+              outline-none
+              disabled:opacity-50
+            "
+          />
 
-            <Button
-              variant="outline"
-              size="icon"
-              disabled={loading}
-            >
-              <Mic className="h-4 w-4" />
-            </Button>
-
-            <Button
-              size="icon"
-              disabled={loading}
-              onClick={
-                handleSend
-              }
-            >
-              {loading ? (
-                <Loader2
-                  className="
-                    h-4
-                    w-4
-                    animate-spin
-                  "
-                />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-
-          <p className="mt-3 text-center text-xs text-slate-500">
-            AI can make mistakes.
-            Verify important
-            information.
-          </p>
+          <button
+            type="button"
+            disabled={!input.trim() || loading}
+            onClick={() => handleSend()}
+            aria-label="Send message"
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-xl
+              bg-violet-600
+              text-white
+              shadow-sm
+              transition-all
+              hover:bg-violet-500
+              disabled:cursor-not-allowed
+              disabled:opacity-40
+            "
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </button>
         </div>
-      </Card>
+
+        <div className="mt-2 flex items-center justify-between px-1 text-[10px] text-zinc-400">
+          <span>Enterprise Policy Guard Enforced</span>
+          <span className="hidden sm:inline">
+            Press <kbd className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-zinc-400">Enter</kbd> to submit
+          </span>
+        </div>
+      </div>
     </section>
   );
 }

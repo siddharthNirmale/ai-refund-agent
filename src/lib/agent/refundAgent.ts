@@ -29,7 +29,7 @@ function createLog(
 export async function runRefundAgent(
   customerId: string
 ) {
-  const logs: any[] = [];
+  const logs: ReturnType<typeof createLog>[] = [];
 
   logs.push(
     createLog(

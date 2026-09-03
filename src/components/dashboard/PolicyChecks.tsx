@@ -1,166 +1,129 @@
 "use client";
 
 import { useAgentStore } from "@/store/useAgentStore";
-
-import {
-  ShieldCheck,
-  ShieldX,
-  AlertTriangle,
-} from "lucide-react";
+import { ShieldCheck, ShieldX, AlertTriangle } from "lucide-react";
+import { refundPolicy } from "@/data/refundPolicy";
 
 export default function PolicyChecks() {
-  const logs =
-    useAgentStore(
-      (state) => state.logs
-    );
+  const logs = useAgentStore((state) => state.logs);
 
-  if (!logs.length) {
-    return (
-      <div
-        className="
-          flex
-          h-60
-          flex-col
-          items-center
-          justify-center
-          text-center
-        "
-      >
-        <AlertTriangle
-          className="
-            h-10
-            w-10
-            text-slate-300
-          "
-        />
-
-        <p className="mt-4 font-medium text-slate-600">
-          No Policy Evaluation
-        </p>
-
-        <p className="mt-1 text-sm text-slate-400">
-          Run a refund request to
-          see policy validation.
-        </p>
-      </div>
-    );
-  }
+  const policyLogs = logs.filter(
+    (l) =>
+      l.step.toLowerCase().includes("policy") ||
+      l.step.toLowerCase().includes("evaluation") ||
+      l.step.toLowerCase().includes("profile") ||
+      l.step.toLowerCase().includes("order")
+  );
 
   return (
-    <div
-      className="
-        max-h-[500px]
-        overflow-y-auto
-        space-y-3
-        pr-2
-      "
-    >
-      {logs
-        .filter(
-          (log) =>
-            log.step !==
-            "Final Decision"
-        )
-        .map((log) => {
-          const passed =
-            log.status ===
-            "success";
+    <div className="space-y-4">
+      {/* Active Rule Executions */}
+      {policyLogs.length > 0 ? (
+        <div className="space-y-2">
+          <span className="block text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+            Evaluated Clauses
+          </span>
 
-          return (
-            <div
-              key={log.id}
-              className={`
-                rounded-xl
-                border
-                p-4
-                transition-all
-                ${
-                  passed
-                    ? "border-green-200 bg-green-50"
-                    : "border-red-200 bg-red-50"
-                }
-              `}
-            >
-              <div className="flex items-start gap-3">
+          {policyLogs.map((log) => {
+            const passed = log.status === "success";
+
+            return (
+              <div
+                key={log.id}
+                className="flex items-start gap-2.5 rounded-xl bg-white/[0.02] p-3 text-xs"
+              >
                 <div
                   className={`
+                    mt-0.5
                     flex
-                    h-8
-                    w-8
+                    h-5
+                    w-5
+                    shrink-0
                     items-center
                     justify-center
-                    rounded-full
+                    rounded-lg
                     ${
                       passed
-                        ? "bg-green-100"
-                        : "bg-red-100"
+                        ? "bg-emerald-500/15 text-emerald-400"
+                        : "bg-rose-500/15 text-rose-400"
                     }
                   `}
                 >
                   {passed ? (
-                    <ShieldCheck
-                      className="
-                        h-4
-                        w-4
-                        text-green-600
-                      "
-                    />
+                    <ShieldCheck className="h-3.5 w-3.5" />
                   ) : (
-                    <ShieldX
-                      className="
-                        h-4
-                        w-4
-                        text-red-600
-                      "
-                    />
+                    <ShieldX className="h-3.5 w-3.5" />
                   )}
                 </div>
 
-                <div className="flex-1">
+                <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between">
-                    <h4
-                      className="
-                        font-medium
-                        text-slate-900
-                      "
-                    >
+                    <span className="font-medium text-zinc-200">
                       {log.step}
-                    </h4>
-
+                    </span>
                     <span
                       className={`
-                        rounded-full
-                        px-2
-                        py-1
-                        text-xs
+                        rounded-md
+                        px-1.5
+                        py-0.5
+                        text-[10px]
                         font-medium
                         ${
                           passed
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : "bg-rose-500/10 text-rose-400"
                         }
                       `}
                     >
-                      {passed
-                        ? "PASSED"
-                        : "FAILED"}
+                      {passed ? "VERIFIED" : "VIOLATION"}
                     </span>
                   </div>
 
-                  <p
-                    className="
-                      mt-2
-                      text-sm
-                      text-slate-600
-                    "
-                  >
+                  <p className="mt-1 text-[11px] leading-relaxed text-zinc-400">
                     {log.details}
                   </p>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      ) : (
+        <div className="rounded-xl bg-white/[0.02] p-4 text-center">
+          <AlertTriangle className="mx-auto h-6 w-6 text-zinc-500" />
+          <p className="mt-2 text-xs font-medium text-zinc-300">
+            No Active Policy Run
+          </p>
+          <p className="mt-1 text-[11px] text-zinc-500">
+            Initiate a customer request to evaluate policy rules.
+          </p>
+        </div>
+      )}
+
+      {/* Corporate Policy Matrix */}
+      <div className="pt-2">
+        <span className="mb-2 block text-[10px] font-medium uppercase tracking-wider text-zinc-400">
+          Governing Policy Matrix
+        </span>
+
+        <div className="space-y-1.5">
+          {refundPolicy.rules.slice(0, 5).map((rule) => (
+            <div
+              key={rule.id}
+              className="rounded-xl bg-white/[0.015] p-2.5 text-xs transition-colors hover:bg-white/[0.03]"
+            >
+              <div className="flex items-center justify-between">
+                <span className="font-medium text-zinc-300">{rule.title}</span>
+                <span className="font-mono text-[10px] text-zinc-400">
+                  {rule.id}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-zinc-400 leading-relaxed">
+                {rule.description}
+              </p>
             </div>
-          );
-        })}
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

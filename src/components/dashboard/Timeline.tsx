@@ -1,185 +1,83 @@
 "use client";
 
 import { useAgentStore } from "@/store/useAgentStore";
-
-import {
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  Clock3,
-} from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Clock3 } from "lucide-react";
 
 export default function Timeline() {
-  const logs = useAgentStore(
-    (state) => state.logs
-  );
-
-  const loading =
-    useAgentStore(
-      (state) => state.loading
-    );
+  const logs = useAgentStore((state) => state.logs);
+  const loading = useAgentStore((state) => state.loading);
 
   if (!logs.length && !loading) {
     return (
-      <div
-        className="
-          flex
-          h-60
-          flex-col
-          items-center
-          justify-center
-          text-center
-        "
-      >
-        <Clock3 className="h-10 w-10 text-slate-300" />
-
-        <p className="mt-4 font-medium text-slate-600">
-          No Analysis Yet
+      <div className="flex h-48 flex-col items-center justify-center text-center">
+        <Clock3 className="h-8 w-8 text-zinc-600" />
+        <p className="mt-3 text-xs font-medium text-zinc-400">
+          No Evaluation Trace Yet
         </p>
-
-        <p className="mt-1 text-sm text-slate-400">
-          Submit a refund request
-          to see the AI workflow.
+        <p className="mt-1 text-[11px] text-zinc-500">
+          Submit a refund query to watch the agent execute validation steps.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="relative space-y-6">
+    <div className="relative space-y-4">
       {logs.map((log, index) => {
-        const isLast =
-          index ===
-          logs.length - 1;
+        const isLast = index === logs.length - 1;
+        const isSuccess = log.status === "success";
+        const isFailed = log.status === "failed";
+        const isRunning = log.status === "running";
 
         return (
-          <div
-            key={log.id}
-            className="relative flex gap-4"
-          >
-            {/* Vertical Line */}
-
+          <div key={log.id} className="relative flex gap-3">
+            {/* Vertical Connector Rail */}
             {!isLast && (
-              <div
-                className="
-                  absolute
-                  left-[10px]
-                  top-6
-                  h-full
-                  w-[2px]
-                  bg-slate-200
-                "
-              />
+              <div className="absolute left-[9px] top-6 h-[calc(100%+8px)] w-px bg-white/[0.08]" />
             )}
 
-            {/* Icon */}
-
-            <div
-              className="
-                relative
-                z-10
-                flex
-                h-5
-                w-5
-                items-center
-                justify-center
-              "
-            >
-              {log.status ===
-                "success" && (
-                <CheckCircle2
-                  className="
-                    h-5
-                    w-5
-                    text-green-500
-                  "
-                />
+            {/* Step Node Icon */}
+            <div className="relative z-10 flex h-5 w-5 shrink-0 items-center justify-center pt-0.5">
+              {isSuccess && (
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
               )}
-
-              {log.status ===
-                "failed" && (
-                <XCircle
-                  className="
-                    h-5
-                    w-5
-                    text-red-500
-                  "
-                />
-              )}
-
-              {log.status ===
-                "running" && (
-                <Loader2
-                  className="
-                    h-5
-                    w-5
-                    animate-spin
-                    text-yellow-500
-                  "
-                />
+              {isFailed && <XCircle className="h-4 w-4 text-rose-400" />}
+              {isRunning && (
+                <Loader2 className="h-4 w-4 animate-spin text-amber-400" />
               )}
             </div>
 
-            {/* Content */}
-
-            <div
-              className="
-                flex-1
-                rounded-xl
-                border
-                border-slate-200
-                bg-white
-                p-4
-                shadow-sm
-              "
-            >
+            {/* Step Content */}
+            <div className="flex-1 rounded-xl bg-white/[0.02] p-3 text-xs">
               <div className="flex items-center justify-between">
-                <h4
-                  className="
-                    text-sm
-                    font-semibold
-                    text-slate-900
-                  "
-                >
-                  {log.step}
-                </h4>
-
-                <span
-                  className="
-                    text-xs
-                    text-slate-400
-                  "
-                >
+                <span className="font-medium text-zinc-200">{log.step}</span>
+                <span className="font-mono text-[10px] text-zinc-400">
                   {log.time}
                 </span>
               </div>
 
-              <p
-                className="
-                  mt-2
-                  text-sm
-                  text-slate-500
-                "
-              >
-                {log.details}
-              </p>
+              {log.details && (
+                <p className="mt-1 text-[11px] leading-relaxed text-zinc-400">
+                  {log.details}
+                </p>
+              )}
 
-              <div className="mt-3">
+              <div className="mt-2">
                 <span
                   className={`
-                    rounded-full
-                    px-2
-                    py-1
-                    text-xs
+                    inline-flex
+                    items-center
+                    rounded-md
+                    px-1.5
+                    py-0.5
+                    text-[10px]
                     font-medium
                     ${
-                      log.status ===
-                      "success"
-                        ? "bg-green-100 text-green-700"
-                        : log.status ===
-                          "failed"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-yellow-100 text-yellow-700"
+                      isSuccess
+                        ? "bg-emerald-500/10 text-emerald-400"
+                        : isFailed
+                        ? "bg-rose-500/10 text-rose-400"
+                        : "bg-amber-500/10 text-amber-400"
                     }
                   `}
                 >
@@ -192,31 +90,9 @@ export default function Timeline() {
       })}
 
       {loading && (
-        <div
-          className="
-            flex
-            items-center
-            gap-3
-            rounded-xl
-            border
-            border-dashed
-            border-slate-300
-            p-4
-          "
-        >
-          <Loader2
-            className="
-              h-4
-              w-4
-              animate-spin
-              text-violet-600
-            "
-          />
-
-          <span className="text-sm text-slate-600">
-            Agent is processing
-            additional checks...
-          </span>
+        <div className="flex items-center gap-2.5 rounded-xl bg-white/[0.02] p-3 text-xs text-zinc-400">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-400" />
+          <span>Executing subsequent policy checks...</span>
         </div>
       )}
     </div>
