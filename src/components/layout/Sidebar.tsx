@@ -10,6 +10,7 @@ import {
   Sparkles,
   ShoppingBag,
   ExternalLink,
+  Info,
 } from "lucide-react";
 
 import CustomerSelector from "./CustomerSelector";
@@ -35,6 +36,7 @@ export default function Sidebar() {
   const logs = useAgentStore((state) => state.logs);
   const clearAgentRun = useAgentStore((state) => state.clearAgentRun);
   const clearMessages = useAgentStore((state) => state.clearMessages);
+  const setShowIntro = useAgentStore((state) => state.setShowIntro);
 
   const handleReset = () => {
     clearAgentRun();
@@ -257,29 +259,53 @@ export default function Sidebar() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleReset}
-          className="
-            flex
-            w-full
-            items-center
-            justify-center
-            gap-2
-            rounded-xl
-            bg-white/[0.04]
-            py-2.5
-            text-xs
-            font-medium
-            text-zinc-400
-            transition-colors
-            hover:bg-white/[0.08]
-            hover:text-zinc-100
-          "
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          <span>Reset Session</span>
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setShowIntro(true)}
+            className="
+              flex
+              items-center
+              justify-center
+              gap-1.5
+              rounded-xl
+              bg-white/[0.04]
+              py-2
+              text-xs
+              font-medium
+              text-zinc-400
+              transition-colors
+              hover:bg-white/[0.08]
+              hover:text-zinc-100
+            "
+          >
+            <Info className="h-3.5 w-3.5" />
+            <span>Overview</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleReset}
+            className="
+              flex
+              items-center
+              justify-center
+              gap-1.5
+              rounded-xl
+              bg-white/[0.04]
+              py-2
+              text-xs
+              font-medium
+              text-zinc-400
+              transition-colors
+              hover:bg-white/[0.08]
+              hover:text-zinc-100
+            "
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span>Reset</span>
+          </button>
+        </div>
       </div>
     </aside>
   );

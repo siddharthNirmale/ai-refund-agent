@@ -33,6 +33,9 @@ type AgentStore = {
 
   messages: ChatMessage[];
 
+  showIntro: boolean;
+  setShowIntro: (show: boolean) => void;
+
   // Actions
 
   setLoading: (
@@ -79,6 +82,10 @@ export const useAgentStore =
     riskScore: 0,
 
     loading: false,
+
+    showIntro: true,
+
+    setShowIntro: (show) => set({ showIntro: show }),
 
     messages: [
       {
