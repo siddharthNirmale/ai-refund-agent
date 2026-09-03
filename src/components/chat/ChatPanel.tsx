@@ -32,6 +32,8 @@ export default function ChatPanel() {
   const setResult = useAgentStore((state) => state.setResult);
   const loading = useAgentStore((state) => state.loading);
   const setLoading = useAgentStore((state) => state.setLoading);
+  const processingStage = useAgentStore((state) => state.processingStage);
+  const setProcessingStage = useAgentStore((state) => state.setProcessingStage);
   const clearAgentRun = useAgentStore((state) => state.clearAgentRun);
   const clearMessages = useAgentStore((state) => state.clearMessages);
 
@@ -66,9 +68,11 @@ export default function ChatPanel() {
 
     setInput("");
     setLoading(true);
+    setProcessingStage("Retrieving order record & customer history...");
 
     try {
-      const response = await fetch("/api/refund", {
+      // Start API request immediately in background
+      const apiPromise = fetch("/api/refund", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -80,11 +84,22 @@ export default function ChatPanel() {
         }),
       });
 
+      // Purposeful, realistic background validation progression (~240ms micro-intervals)
+      await new Promise((r) => setTimeout(r, 260));
+      setProcessingStage("Evaluating return policy window & clearance rules...");
+
+      await new Promise((r) => setTimeout(r, 280));
+      setProcessingStage("Checking fraud indicators & transaction risk...");
+
+      const response = await apiPromise;
       if (!response.ok) {
         throw new Error("API request failed");
       }
 
       const result = await response.json();
+
+      await new Promise((r) => setTimeout(r, 200));
+      setProcessingStage("Synthesizing personalized customer communication...");
 
       setResult(
         result.logs,
@@ -118,6 +133,7 @@ export default function ChatPanel() {
         }),
       });
     } finally {
+      setProcessingStage("");
       setLoading(false);
     }
   };
@@ -186,11 +202,28 @@ export default function ChatPanel() {
         ))}
 
         {loading && (
-          <div className="flex items-center gap-3 rounded-2xl bg-white/[0.03] px-4 py-3 text-xs text-zinc-300 ring-1 ring-white/[0.05]">
-            <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-400" />
-            <span className="font-medium">
-              Evaluating refund policy criteria and customer order history...
-            </span>
+          <div className="flex w-full items-start gap-3 animate-in fade-in-0 duration-200">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-violet-600/20 text-violet-300 ring-1 ring-violet-500/30">
+              <Sparkles className="h-4 w-4 animate-spin text-violet-400" />
+            </div>
+
+            <div className="flex max-w-[86%] lg:max-w-[680px] flex-col items-start">
+              <div className="mb-1.5 flex items-center gap-2 px-1 text-[11px]">
+                <span className="font-medium text-zinc-400">RefundPilot AI</span>
+                <span className="rounded bg-violet-500/15 px-1.5 py-0.2 font-mono text-[9px] text-violet-300">
+                  evaluating
+                </span>
+              </div>
+
+              <div className="rounded-2xl rounded-tl-xs bg-white/[0.04] px-4 py-3 text-[13.5px] leading-relaxed text-zinc-300 ring-1 ring-white/[0.06]">
+                <div className="flex items-center gap-2.5">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-violet-400 shrink-0" />
+                  <span className="font-normal">
+                    {processingStage || "Evaluating policy rules and customer order history..."}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

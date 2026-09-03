@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import dynamic from "next/dynamic";
 import {
   ShieldCheck,
   Activity,
@@ -8,12 +9,37 @@ import {
   SlidersHorizontal,
   FileCheck2,
   Terminal,
+  Loader2,
 } from "lucide-react";
 import { useAgentStore } from "@/store/useAgentStore";
 import DecisionCard from "./DecisionCard";
-import Timeline from "./Timeline";
-import PolicyChecks from "./PolicyChecks";
-import RawLogs from "./Rawlogs";
+
+const Timeline = dynamic(() => import("./Timeline"), {
+  loading: () => (
+    <div className="h-48 rounded-xl bg-white/[0.02] p-4 text-xs text-zinc-500 flex items-center justify-center">
+      <Loader2 className="h-4 w-4 animate-spin text-zinc-500 mr-2" />
+      Loading timeline...
+    </div>
+  ),
+});
+
+const PolicyChecks = dynamic(() => import("./PolicyChecks"), {
+  loading: () => (
+    <div className="h-48 rounded-xl bg-white/[0.02] p-4 text-xs text-zinc-500 flex items-center justify-center">
+      <Loader2 className="h-4 w-4 animate-spin text-zinc-500 mr-2" />
+      Loading policy matrix...
+    </div>
+  ),
+});
+
+const RawLogs = dynamic(() => import("./Rawlogs"), {
+  loading: () => (
+    <div className="h-48 rounded-xl bg-white/[0.02] p-4 text-xs text-zinc-500 flex items-center justify-center">
+      <Loader2 className="h-4 w-4 animate-spin text-zinc-500 mr-2" />
+      Connecting audit stream...
+    </div>
+  ),
+});
 
 export default function ReasoningPanel() {
   const [activeTab, setActiveTab] = useState<"timeline" | "policy" | "logs">(
@@ -24,6 +50,7 @@ export default function ReasoningPanel() {
   const reason = useAgentStore((state) => state.reason);
   const riskScore = useAgentStore((state) => state.riskScore);
   const loading = useAgentStore((state) => state.loading);
+  const processingStage = useAgentStore((state) => state.processingStage);
   const logs = useAgentStore((state) => state.logs);
 
   return (
@@ -39,7 +66,7 @@ export default function ReasoningPanel() {
           </p>
         </div>
 
-        {/* Serene Status Tag — Zero Pulsating Dot */}
+        {/* Status Badge */}
         <div
           className={`
             inline-flex
@@ -50,9 +77,11 @@ export default function ReasoningPanel() {
             py-1
             text-[11px]
             font-medium
+            transition-colors
+            duration-200
             ${
               loading
-                ? "bg-amber-500/10 text-amber-400"
+                ? "bg-violet-500/15 text-violet-300"
                 : decision
                 ? "bg-emerald-500/10 text-emerald-400"
                 : "bg-white/[0.05] text-zinc-400"
@@ -66,20 +95,43 @@ export default function ReasoningPanel() {
               rounded-full
               ${
                 loading
-                  ? "bg-amber-400"
+                  ? "bg-violet-400"
                   : decision
                   ? "bg-emerald-400"
                   : "bg-zinc-400"
               }
             `}
           />
-          <span>{loading ? "Evaluating" : decision ? "Evaluated" : "Idle"}</span>
+          <span>{loading ? "Processing" : decision ? "Evaluated" : "Idle"}</span>
         </div>
       </div>
 
-      {/* Decision Banner */}
+      {/* Decision / Active Analysis Banner */}
       <div className="shrink-0 px-5 pb-3">
-        {decision ? (
+        {loading ? (
+          <div className="rounded-2xl bg-violet-500/[0.06] p-4 ring-1 ring-violet-500/20 transition-all duration-300">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
+                <span className="text-xs font-semibold text-white">
+                  Evaluating Policy Graph
+                </span>
+              </div>
+              <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-mono text-violet-300">
+                ACTIVE
+              </span>
+            </div>
+
+            <p className="mt-2 text-xs leading-relaxed text-zinc-300">
+              {processingStage || "Analyzing customer history & corporate return rules..."}
+            </p>
+
+            {/* Micro-progress track */}
+            <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/[0.08]">
+              <div className="h-full w-2/3 rounded-full bg-gradient-to-r from-violet-500 via-indigo-400 to-violet-500 animate-progress-slide" />
+            </div>
+          </div>
+        ) : decision ? (
           <DecisionCard
             status={decision === "approved" ? "approved" : "denied"}
             reason={reason}
@@ -101,7 +153,7 @@ export default function ReasoningPanel() {
         )}
       </div>
 
-      {/* Typographic Metrics Ribbon (No harsh bordered boxes) */}
+      {/* Typographic Metrics Ribbon */}
       <div className="shrink-0 px-5 py-2">
         <div className="grid grid-cols-3 gap-2">
           <div className="rounded-xl bg-white/[0.02] p-3">
@@ -111,17 +163,25 @@ export default function ReasoningPanel() {
                 Risk
               </span>
             </div>
-            <p
-              className={`mt-1 text-lg font-bold ${
-                riskScore > 60
-                  ? "text-rose-400"
-                  : riskScore > 20
-                  ? "text-amber-400"
-                  : "text-emerald-400"
-              }`}
-            >
-              {riskScore}%
-            </p>
+            <div className="mt-1">
+              {loading ? (
+                <span className="text-xs font-medium text-violet-400 font-mono">
+                  Calculating
+                </span>
+              ) : (
+                <p
+                  className={`text-lg font-bold ${
+                    riskScore > 60
+                      ? "text-rose-400"
+                      : riskScore > 20
+                      ? "text-amber-400"
+                      : "text-emerald-400"
+                  }`}
+                >
+                  {riskScore}%
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="rounded-xl bg-white/[0.02] p-3">
@@ -131,9 +191,17 @@ export default function ReasoningPanel() {
                 Checks
               </span>
             </div>
-            <p className="mt-1 text-lg font-bold text-zinc-100">
-              {logs.length || 0}
-            </p>
+            <div className="mt-1">
+              {loading ? (
+                <span className="text-xs font-medium text-zinc-400 font-mono">
+                  Running...
+                </span>
+              ) : (
+                <p className="text-lg font-bold text-zinc-100">
+                  {logs.length || 0}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="rounded-xl bg-white/[0.02] p-3">
@@ -143,9 +211,17 @@ export default function ReasoningPanel() {
                 Verdict
               </span>
             </div>
-            <p className="mt-1 text-xs font-semibold capitalize text-zinc-200 truncate">
-              {decision || "Pending"}
-            </p>
+            <div className="mt-1">
+              {loading ? (
+                <span className="text-xs font-medium text-amber-400 font-mono">
+                  Validating
+                </span>
+              ) : (
+                <p className="text-xs font-semibold capitalize text-zinc-200 truncate">
+                  {decision || "Pending"}
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -227,11 +303,20 @@ export default function ReasoningPanel() {
         </div>
       </div>
 
-      {/* Tab Panels */}
+      {/* Tab Panels with Suspense */}
       <div className="flex-1 min-h-0 overflow-y-auto px-5 py-4">
-        {activeTab === "timeline" && <Timeline />}
-        {activeTab === "policy" && <PolicyChecks />}
-        {activeTab === "logs" && <RawLogs />}
+        <Suspense
+          fallback={
+            <div className="h-48 rounded-xl bg-white/[0.02] p-4 text-xs text-zinc-500 flex items-center justify-center">
+              <Loader2 className="h-4 w-4 animate-spin text-zinc-500 mr-2" />
+              Loading tab content...
+            </div>
+          }
+        >
+          {activeTab === "timeline" && <Timeline />}
+          {activeTab === "policy" && <PolicyChecks />}
+          {activeTab === "logs" && <RawLogs />}
+        </Suspense>
       </div>
     </aside>
   );

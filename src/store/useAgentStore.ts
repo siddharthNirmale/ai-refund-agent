@@ -33,6 +33,9 @@ type AgentStore = {
 
   messages: ChatMessage[];
 
+  processingStage: string;
+  setProcessingStage: (stage: string) => void;
+
   showIntro: boolean;
   setShowIntro: (show: boolean) => void;
 
@@ -82,6 +85,10 @@ export const useAgentStore =
     riskScore: 0,
 
     loading: false,
+
+    processingStage: "",
+
+    setProcessingStage: (stage) => set({ processingStage: stage }),
 
     showIntro: true,
 
